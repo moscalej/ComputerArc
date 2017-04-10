@@ -16,6 +16,9 @@ public:
 	SIM_coreState report() ;
 	void nop_stage(PipeStageState *stage);
 private:
+
+	int result_exe, result_dec, result_men, result_wb;
+
 	void fetch();
 	void id();
 	void exe();
@@ -267,7 +270,7 @@ void core::exe()
 	}
 	case CMD_ADD:     // dst <- src1 + src2
 	{
-		this->_pipeStageState[EXECUTE].src1Val = this->_pipeStageState[EXECUTE].src1Val + this->_pipeStageState[EXECUTE].src2Val;
+		this->result[0] = this->_pipeStageState[EXECUTE].src1Val + this->_pipeStageState[EXECUTE].src2Val;
 		break;
 	}
 	case CMD_SUB:    // dst <- src1 - src2

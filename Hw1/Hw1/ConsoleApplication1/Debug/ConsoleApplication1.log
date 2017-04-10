@@ -1,7 +1,3 @@
-﻿  sim_mem.cpp
-  sim_main.cpp
-d:\ale\documents\technion\computer arc\hw1\hw1\code\sim_main.cpp(19): warning C4101: 'pipeStageState': unreferenced local variable
-  sim_core.cpp
-  Generating Code...
+﻿  sim_core.cpp
   ConsoleApplication1.vcxproj -> D:\Ale\Documents\technion\computer arc\Hw1\Hw1\Debug\HW1.exe
   ConsoleApplication1.vcxproj -> D:\Ale\Documents\technion\computer arc\Hw1\Hw1\Debug\HW1.pdb (Partial PDB)
