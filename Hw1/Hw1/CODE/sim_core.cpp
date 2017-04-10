@@ -18,7 +18,7 @@ public:
 private:
 
 	int result_exe, result_dec, result_men, result_wb;
-
+	
 	void fetch();
 	void id();
 	void exe();
@@ -76,7 +76,9 @@ void core::CoreClock()
 			_pipeStageState[MEMORY] = _pipeStageState[EXECUTE];
 			_pipeStageState[EXECUTE] = _pipeStageState[DECODE];
 			_pipeStageState[DECODE] = _pipeStageState[FETCH];
-			
+			result_wb = result_men;
+			result_men = result_exe;
+			result_exe = result_dec;
 			
 			
 			
@@ -252,6 +254,10 @@ if (this->_pipeStageState[DECODE].cmd.isSrc2Imm == false)
 	{
 	_pipeStageState[DECODE].src2Val =  _pipeStageState[DECODE].cmd.src2 ;
 	}
+if (_pipeStageState[DECODE].cmd.opcode == CMD_STORE)
+{
+	result_dec = _regFile[_pipeStageState[DECODE].cmd.dst];
+}
 }
 
 void core::exe()
@@ -293,17 +299,9 @@ void core::exe()
 	case CMD_STORE:  // Mem[dst + src2] <- src1  (src2 may be an immediate)
 	{
 
+		result_exe += _pipeStageState[EXECUTE].src2Val;
 
-
-		if (_pipeStageState[EXECUTE].cmd.isSrc2Imm == false)
-		{
-			result_exe = _pipeStageState[EXECUTE].src2Val;
-		}
-		else
-		{
-			result_exe = (_pipeStageState[EXECUTE].src2Val + _pipeStageState[EXECUTE].cmd.src2);
-		}
-		break;
+	}
 
 	case CMD_BR:     // Unconditional relative branch to PC+dst register value
 	{
@@ -324,7 +322,7 @@ void core::exe()
 	{
 		break;
 	}
-	}
+	
 
 	}
 }
@@ -336,13 +334,13 @@ int core::mem()
 
 	case CMD_LOAD:
 	{
-		return	SIM_MemDataRead(_pipeStageState[MEMORY].src2Val, &_pipeStageState[MEMORY].src1Val);
+		return	SIM_MemDataRead(_pipeStageState[MEMORY].src2Val, &result_men);
 
 	}
 	case CMD_STORE:
 
 	{
-		SIM_MemDataWrite(_pipeStageState[MEMORY].src2Val, _pipeStageState[MEMORY].src1Val);
+		SIM_MemDataWrite(result_men, _pipeStageState[MEMORY].src1Val);
 		return 0;
 
 	}
@@ -393,7 +391,7 @@ void core::wb()
 {
 	if (_pipeStageState[WRITEBACK].cmd.opcode == CMD_LOAD || _pipeStageState[WRITEBACK].cmd.opcode == CMD_ADD || _pipeStageState[WRITEBACK].cmd.opcode == CMD_SUB)
 	{
-		_regFile[_pipeStageState[WRITEBACK].cmd.dst] = _pipeStageState[WRITEBACK].src1Val;
+		_regFile[_pipeStageState[WRITEBACK].cmd.dst] = result_wb;
 
 	}
 
