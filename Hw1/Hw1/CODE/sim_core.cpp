@@ -270,19 +270,19 @@ void core::exe()
 	}
 	case CMD_ADD:     // dst <- src1 + src2
 	{
-		this->result[0] = this->_pipeStageState[EXECUTE].src1Val + this->_pipeStageState[EXECUTE].src2Val;
+		this->result_exe = this->_pipeStageState[EXECUTE].src1Val + this->_pipeStageState[EXECUTE].src2Val;
 		break;
 	}
 	case CMD_SUB:    // dst <- src1 - src2
 	{
-		this->_pipeStageState[EXECUTE].src1Val = this->_pipeStageState[EXECUTE].src1Val - this->_pipeStageState[EXECUTE].src2Val;
+		this->result_exe = this->_pipeStageState[EXECUTE].src1Val - this->_pipeStageState[EXECUTE].src2Val;
 		break;
 	}
 	case CMD_LOAD:    // dst <- Mem[src1 + src2]  (src2 may be an immediate)
 	{
 	//	if (_pipeStageState[EXECUTE].cmd.isSrc2Imm == false)
 	//	{
-			_pipeStageState[EXECUTE].src2Val = (_pipeStageState[EXECUTE].src1Val + _pipeStageState[EXECUTE].src2Val);
+			result_exe= (_pipeStageState[EXECUTE].src1Val + _pipeStageState[EXECUTE].src2Val);
 	//	}
 //		else
 //	{
@@ -297,11 +297,11 @@ void core::exe()
 
 		if (_pipeStageState[EXECUTE].cmd.isSrc2Imm == false)
 		{
-			_pipeStageState[EXECUTE].src2Val = _pipeStageState[EXECUTE].src2Val;
+			result_exe = _pipeStageState[EXECUTE].src2Val;
 		}
 		else
 		{
-			_pipeStageState[EXECUTE].src2Val = (_pipeStageState[EXECUTE].src2Val + _pipeStageState[EXECUTE].cmd.src2);
+			result_exe = (_pipeStageState[EXECUTE].src2Val + _pipeStageState[EXECUTE].cmd.src2);
 		}
 		break;
 
