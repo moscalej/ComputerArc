@@ -172,7 +172,7 @@ void core::CoreClock()
 				_pipeStageState[DECODE] = _pipeStageState[EXECUTE];
 				nop_stage(&_pipeStageState[EXECUTE]);
 
-				_pc = _pc - 4;
+				if (this->_pipeStageState[MEMORY].cmd.opcode != CMD_HALT && this->_pipeStageState[WRITEBACK].cmd.opcode != CMD_HALT)_pc = _pc - 4;
 
 			}
 		
@@ -219,6 +219,7 @@ SIM_coreState core::report()
 {
 	SIM_coreState tmp;
 	tmp.pc = this->_pc;
+	id();
 	for (int i=0; i < 5; i++) 
 	{
 		tmp.pipeStageState[i].cmd = this->_pipeStageState[i].cmd;
