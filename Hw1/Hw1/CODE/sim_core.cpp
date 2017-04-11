@@ -11,12 +11,18 @@ class core
 public:
 	core();
 	~core();
-	void CoreClock();
+	void CoreClock(bool split_regfile, bool forwd);
 	void Reset();
 	SIM_coreState report() ;
 	void nop_stage(PipeStageState *stage);
+	bool forwd = false;
 private:
 
+	int forwarding_unit(bool forwward);
+
+	void hdu();
+	void register_update();
+	void result_update();
 	int result_exe, result_dec, result_men, result_wb;
 	
 	void fetch();
@@ -58,15 +64,35 @@ core::~core()
 {
 }
 
-void core::CoreClock()
+void core::CoreClock(bool split_regfile,bool forwd)
 {
+	if (split_regfile == true)
+	{
 
-	if (split_regfile == false)
+	}
+	//this->hdu();
+
+	if (mem() == 0)
+	{
+		this->fetch();
+		id();
+		exe();
+		wb();
+		this->register_update();
+		this->register_update();
+		_pc += 4;
+		
+
+	}
+
+
+}
+	/*if (split_regfile == false)
 	{
 
 		if (mem() == 0)
 		{
-			
+
 
 			wb();
 			id();
@@ -79,18 +105,18 @@ void core::CoreClock()
 			result_wb = result_men;
 			result_men = result_exe;
 			result_exe = result_dec;
-			
-			
-			
+
+
+
 			_pc += 4;
 			fetch();
-			
+
 
 		}
 		else
 		{
 			wb();
-			
+
 			nop_stage(&_pipeStageState[WRITEBACK]);
 
 		}
@@ -101,17 +127,10 @@ void core::CoreClock()
 		wb();
 		_pc += 4;
 		fetch();
-
 		id();
 		exe();
 		mem();
-
-
-		_regFile[0] = 0;
-		_pipeStageState[WRITEBACK] = _pipeStageState[MEMORY];
-		_pipeStageState[MEMORY] = _pipeStageState[EXECUTE];
-		_pipeStageState[EXECUTE] = _pipeStageState[DECODE];
-		_pipeStageState[DECODE] = _pipeStageState[FETCH];
+		register_update();
 
 	}
 
@@ -122,297 +141,346 @@ void core::CoreClock()
 
 	//HDU
 
-	
+
 	if (_pipeStageState[MEMORY].cmd.dst == _pipeStageState[EXECUTE].cmd.src1 || _pipeStageState[MEMORY].cmd.dst == _pipeStageState[EXECUTE].cmd.src2)
 	{
-		if (_pipeStageState[MEMORY].cmd.opcode == CMD_LOAD  )
+		if (_pipeStageState[MEMORY].cmd.opcode == CMD_LOAD)
 		{
-		
-		
+
+
 			_pipeStageState[FETCH].cmd = _pipeStageState[DECODE].cmd;
 			_pipeStageState[DECODE] = _pipeStageState[EXECUTE];
-			 nop_stage(&_pipeStageState[EXECUTE]);
+			nop_stage(&_pipeStageState[EXECUTE]);
 
 			_pc = _pc - 4;
 
 		}
 	}
+
+
+	//if (forwarding == true) 
 	
 
-		if (forwarding == true)
-			{
-				if (this->_pipeStageState[MEMORY].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src1)
-					{
-						this->_pipeStageState[EXECUTE].src1Val = this->_pipeStageState[MEMORY].src1Val;
-					}
-					if (this->_pipeStageState[MEMORY].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src2)
-					{
-						this->_pipeStageState[EXECUTE].src2Val = this->_pipeStageState[MEMORY].src1Val;
-					}
-					if (this->_pipeStageState[WRITEBACK].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src1)
-					{
-						this->_pipeStageState[EXECUTE].src1Val = this->_pipeStageState[WRITEBACK].src1Val;
-					}
-					if (this->_pipeStageState[WRITEBACK].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src2)
-					{
-						this->_pipeStageState[EXECUTE].src2Val = this->_pipeStageState[WRITEBACK].src1Val;
-					}
-				}
+	else
+	{
+		if (((this->_pipeStageState[WRITEBACK].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src1 || this->_pipeStageState[WRITEBACK].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src2) && _pipeStageState[WRITEBACK].cmd.opcode != CMD_NOP)
+			|| (_pipeStageState[MEMORY].cmd.dst == _pipeStageState[EXECUTE].cmd.src1 || _pipeStageState[MEMORY].cmd.dst == _pipeStageState[EXECUTE].cmd.src2) && _pipeStageState[MEMORY].cmd.opcode != CMD_NOP
+			|| (wbBuffer.cmd.dst == _pipeStageState[EXECUTE].cmd.src1 || wbBuffer.cmd.dst == _pipeStageState[EXECUTE].cmd.src2) && wbBuffer.cmd.opcode != CMD_NOP)
+
+		{
+
+
+
+			_pipeStageState[FETCH].cmd = _pipeStageState[DECODE].cmd;
+			_pipeStageState[DECODE] = _pipeStageState[EXECUTE];
+			nop_stage(&_pipeStageState[EXECUTE]);
+
+			if (this->_pipeStageState[MEMORY].cmd.opcode != CMD_HALT && this->_pipeStageState[WRITEBACK].cmd.opcode != CMD_HALT)_pc = _pc - 4;
+
+		}
+
+		//	if ((_pipeStageState[WRITEBACK].cmd.dst == _pipeStageState[DECODE].cmd.src1 || _pipeStageState[WRITEBACK].cmd.dst == _pipeStageState[DECODE].cmd.src2) && _pipeStageState[WRITEBACK].cmd.opcode != CMD_NOP )
+
+		//	{
+		//		_pipeStageState[FETCH].cmd = _pipeStageState[DECODE].cmd;
+
+	//			_pipeStageState[DECODE].cmd.opcode = CMD_NOP;
+	//			_pipeStageState[DECODE].cmd.dst = 0;
+	//			_pipeStageState[DECODE].cmd.src1 = 0;
+	//			_pipeStageState[DECODE].cmd.src2 = 0;
+
+	//			_pc = _pc - 4;
+	//		}
+
+
+	}
+
+	*/
+	
+
+
+	void core::Reset()
+	{
+		for (int i = 0; i < 5; i++)
+		{
+			_pipeStageState[i].cmd.opcode = CMD_NOP;
+			_pipeStageState[i].src1Val = 0;
+			_pipeStageState[i].src2Val = 0;
+		}
+		for (int32_t i = 0; i < SIM_REGFILE_SIZE; i++)
+		{
+			_regFile[i] = 0;
+		}
+		_pc = 0;
+		
+
+
+
+	}
+
+	SIM_coreState core::report()
+	{
+		SIM_coreState tmp;
+		tmp.pc = this->_pc;
+		id();
+		for (int i = 0; i < 5; i++)
+		{
+			tmp.pipeStageState[i].cmd = this->_pipeStageState[i].cmd;
+			tmp.pipeStageState[i].src1Val = this->_pipeStageState[i].src1Val;
+			tmp.pipeStageState[i].src2Val = this->_pipeStageState[i].src2Val;
+		}
+		for (int i = 0; i < SIM_REGFILE_SIZE; i++)
+		{
+			tmp.regFile[i] = this->_regFile[i];
+		}
+		return tmp;
+	}
+
+	void core::fetch()
+	{
+		SIM_MemInstRead(_pc, &_pipeStageState[FETCH].cmd);
+		_pipeStageState[FETCH].src1Val = 0;
+		_pipeStageState[FETCH].src2Val = 0;
+
+
+	}
+
+	void core::id()
+	{
+		_pipeStageState[DECODE].src1Val = _regFile[_pipeStageState[DECODE].cmd.src1];
+
+
+		if (this->_pipeStageState[DECODE].cmd.isSrc2Imm == false)
+		{
+			_pipeStageState[DECODE].src2Val = _regFile[_pipeStageState[DECODE].cmd.src2];
+		}
 		else
 		{
-			if (((this->_pipeStageState[WRITEBACK].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src1 || this->_pipeStageState[WRITEBACK].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src2) && _pipeStageState[WRITEBACK].cmd.opcode != CMD_NOP)
-				|| (_pipeStageState[MEMORY].cmd.dst == _pipeStageState[EXECUTE].cmd.src1 || _pipeStageState[MEMORY].cmd.dst == _pipeStageState[EXECUTE].cmd.src2) && _pipeStageState[MEMORY].cmd.opcode != CMD_NOP
-				|| (wbBuffer.cmd.dst == _pipeStageState[EXECUTE].cmd.src1 || wbBuffer.cmd.dst == _pipeStageState[EXECUTE].cmd.src2) && wbBuffer.cmd.opcode != CMD_NOP)
+			_pipeStageState[DECODE].src2Val = _pipeStageState[DECODE].cmd.src2;
+		}
+		if (_pipeStageState[DECODE].cmd.opcode == CMD_STORE)
+		{
+			result_dec = _regFile[_pipeStageState[DECODE].cmd.dst];
+		}
+	}
 
+	void core::exe()
+	{
+
+
+
+
+		//ALU
+		switch (this->_pipeStageState[EXECUTE].cmd.opcode)
+		{
+		case  CMD_NOP:
+		{
+			_pipeStageState[EXECUTE].src1Val = 0;
+			_pipeStageState[EXECUTE].src2Val = 0;
+		}
+		case CMD_ADD:     // dst <- src1 + src2
+		{
+			this->result_exe = this->_pipeStageState[EXECUTE].src1Val + this->_pipeStageState[EXECUTE].src2Val;
+			break;
+		}
+		case CMD_SUB:    // dst <- src1 - src2
+		{
+			this->result_exe = this->_pipeStageState[EXECUTE].src1Val - this->_pipeStageState[EXECUTE].src2Val;
+			break;
+		}
+		case CMD_LOAD:    // dst <- Mem[src1 + src2]  (src2 may be an immediate)
+		{
+			//	if (_pipeStageState[EXECUTE].cmd.isSrc2Imm == false)
+			//	{
+			result_exe = (_pipeStageState[EXECUTE].src1Val + _pipeStageState[EXECUTE].src2Val);
+			//	}
+		//		else
+		//	{
+				//	_pipeStageState[EXECUTE].src1Val = (_pipeStageState[EXECUTE].src1Val + _pipeStageState[EXECUTE].cmd.src2);
+			//}
+			break;
+		}
+		case CMD_STORE:  // Mem[dst + src2] <- src1  (src2 may be an immediate)
+		{
+
+			result_exe += _pipeStageState[EXECUTE].src2Val;
+
+		}
+
+		case CMD_BR:     // Unconditional relative branch to PC+dst register value
+		{
+			this->_pc += this->_pipeStageState[EXECUTE].src2Val;
+			break;
+		}
+		case CMD_BREQ:   // Branch to PC+dst if (src1 == src2)
+		{
+
+			break;
+		}
+		case CMD_BRNEQ:  // Branch to PC+dst if (src1 != src2)
+		{
+
+			break;
+		}
+		case CMD_HALT:    // Special halt command indicating a stop to the machine
+		{
+			break;
+		}
+
+
+		}
+	}
+
+	int core::mem()
+	{
+		switch (_pipeStageState[MEMORY].cmd.opcode)
+		{
+
+		case CMD_LOAD:
+		{
+			return	SIM_MemDataRead(_pipeStageState[MEMORY].src2Val, &result_men);
+
+		}
+		case CMD_STORE:
+
+		{
+			SIM_MemDataWrite(result_men, _pipeStageState[MEMORY].src1Val);
+			return 0;
+
+		}
+		case  CMD_BREQ:
+		{
+			if ((_pipeStageState[MEMORY].src2Val == _pipeStageState[MEMORY].src1Val))
+			{
+				_pc = _pc + _regFile[_pipeStageState[MEMORY].cmd.dst] - 12;
+				_pipeStageState[DECODE].cmd.opcode = CMD_NOP;
+				_pipeStageState[DECODE].src1Val = 0;
+				_pipeStageState[DECODE].src2Val = 0;
+				_pipeStageState[FETCH].cmd.opcode = CMD_NOP;
+				_pipeStageState[FETCH].src1Val = 0;
+				_pipeStageState[FETCH].src2Val = 0;
+				_pipeStageState[EXECUTE].cmd.opcode = CMD_NOP;
+				_pipeStageState[EXECUTE].src1Val = 0;
+				_pipeStageState[EXECUTE].src2Val = 0;
+
+
+			}
+			return 0;
+
+		}
+		case  CMD_BRNEQ:
+		{
+			if ((_pipeStageState[MEMORY].src2Val != _pipeStageState[MEMORY].src1Val))
+			{
+				_pc = _pc + _regFile[_pipeStageState[MEMORY].cmd.dst] - 12;
+				_pipeStageState[DECODE].cmd.opcode = CMD_NOP;
+				_pipeStageState[DECODE].src1Val = 0;
+				_pipeStageState[DECODE].src2Val = 0;
+				_pipeStageState[FETCH].cmd.opcode = CMD_NOP;
+				_pipeStageState[FETCH].src1Val = 0;
+				_pipeStageState[FETCH].src2Val = 0;
+				_pipeStageState[EXECUTE].cmd.opcode = CMD_NOP;
+				_pipeStageState[EXECUTE].src1Val = 0;
+				_pipeStageState[EXECUTE].src2Val = 0;
+
+			}
+			return 0;
+
+		}
+		}
+		return 0;
+	}
+
+	void core::wb()
+	{
+		if (_pipeStageState[WRITEBACK].cmd.opcode == CMD_LOAD || _pipeStageState[WRITEBACK].cmd.opcode == CMD_ADD || _pipeStageState[WRITEBACK].cmd.opcode == CMD_SUB)
+		{
+			_regFile[_pipeStageState[WRITEBACK].cmd.dst] = result_wb;
+
+		}
+
+	}
+
+	void core::nop_stage(PipeStageState *stage)
+	{
+
+		stage->cmd.opcode = CMD_NOP;
+		stage->cmd.dst = 0;
+		stage->cmd.src1 = 0;
+		stage->cmd.src2 = 0;
+		stage->cmd.isSrc2Imm = false;
+		stage->src1Val = 0;
+		stage->src2Val = 0;
+
+	}
+
+	int core::forwarding_unit(bool forwward) {
+		if (forwward == true)
+		{
+			if (this->_pipeStageState[MEMORY].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src1)
+			{
+				this->_pipeStageState[EXECUTE].src1Val = this->_pipeStageState[MEMORY].src1Val;
+			}
+
+			if (this->_pipeStageState[MEMORY].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src2)
+			{
+				this->_pipeStageState[EXECUTE].src2Val = this->_pipeStageState[MEMORY].src1Val;
+			}
+
+			if (this->_pipeStageState[WRITEBACK].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src1)
+			{
+				this->_pipeStageState[EXECUTE].src1Val = this->_pipeStageState[WRITEBACK].src1Val;
+			}
+
+			if (this->_pipeStageState[WRITEBACK].cmd.dst == this->_pipeStageState[EXECUTE].cmd.src2)
+			{
+				this->_pipeStageState[EXECUTE].src2Val = this->_pipeStageState[WRITEBACK].src1Val;
+			}
+		}
+
+		return 1 ;
+	}
+
+	void core::hdu()
+	{
+		if (_pipeStageState[MEMORY].cmd.dst == _pipeStageState[EXECUTE].cmd.src1 || _pipeStageState[MEMORY].cmd.dst == _pipeStageState[EXECUTE].cmd.src2)
+		{
+			if (_pipeStageState[MEMORY].cmd.opcode == CMD_LOAD)
 			{
 
-			
-			
-				_pipeStageState[FETCH].cmd= _pipeStageState[DECODE].cmd;
+
+				_pipeStageState[FETCH].cmd = _pipeStageState[DECODE].cmd;
 				_pipeStageState[DECODE] = _pipeStageState[EXECUTE];
 				nop_stage(&_pipeStageState[EXECUTE]);
 
-				if (this->_pipeStageState[MEMORY].cmd.opcode != CMD_HALT && this->_pipeStageState[WRITEBACK].cmd.opcode != CMD_HALT)_pc = _pc - 4;
+				_pc = _pc - 4;
 
 			}
+		}
+	}
+
+	void core::register_update()
+	{
+		_regFile[0] = 0;
+		_pipeStageState[WRITEBACK] = _pipeStageState[MEMORY];
+		_pipeStageState[MEMORY] = _pipeStageState[EXECUTE];
+		_pipeStageState[EXECUTE] = _pipeStageState[DECODE];
+		_pipeStageState[DECODE] = _pipeStageState[FETCH];
+	}
+
+	void core::result_update()
+	{
+		result_wb = result_men;
+		result_men = result_exe;
+		result_exe = result_dec;
 		
-			//	if ((_pipeStageState[WRITEBACK].cmd.dst == _pipeStageState[DECODE].cmd.src1 || _pipeStageState[WRITEBACK].cmd.dst == _pipeStageState[DECODE].cmd.src2) && _pipeStageState[WRITEBACK].cmd.opcode != CMD_NOP )
-
-			//	{
-			//		_pipeStageState[FETCH].cmd = _pipeStageState[DECODE].cmd;
-
-		//			_pipeStageState[DECODE].cmd.opcode = CMD_NOP;
-		//			_pipeStageState[DECODE].cmd.dst = 0;
-		//			_pipeStageState[DECODE].cmd.src1 = 0;
-		//			_pipeStageState[DECODE].cmd.src2 = 0;
-
-		//			_pc = _pc - 4;
-		//		}
-
-			
-		}
-
-
-	}
-
-
-void core::Reset()
-{
-	for (int i = 0; i < 5; i++)
-	{
-		_pipeStageState[i].cmd.opcode = CMD_NOP;
-		_pipeStageState[i].src1Val = 0;
-		_pipeStageState[i].src2Val = 0;
-	}
-	for (int32_t i = 0; i < SIM_REGFILE_SIZE; i++)
-	{
-		_regFile[i] = 0;
-	}
-	_pc = 0;
-   fetch();
-   
-
-
-}
-
-SIM_coreState core::report()
-{
-	SIM_coreState tmp;
-	tmp.pc = this->_pc;
-	id();
-	for (int i=0; i < 5; i++) 
-	{
-		tmp.pipeStageState[i].cmd = this->_pipeStageState[i].cmd;
-		tmp.pipeStageState[i].src1Val = this->_pipeStageState[i].src1Val;
-		tmp.pipeStageState[i].src2Val = this->_pipeStageState[i].src2Val;
-	}
-	for (int i = 0; i < SIM_REGFILE_SIZE; i++)
-	{
-		tmp.regFile[i] = this->_regFile[i];
-	}
-	return tmp;
-}
-
-void core::fetch()
-{
-	SIM_MemInstRead(_pc, &_pipeStageState[FETCH].cmd);
-	_pipeStageState[FETCH].src1Val = 0;
-	_pipeStageState[FETCH].src2Val = 0;
-	
-
-}
-
-void core::id()
-{
-	_pipeStageState[DECODE].src1Val = _regFile[_pipeStageState[DECODE].cmd.src1];
-
-
-if (this->_pipeStageState[DECODE].cmd.isSrc2Imm == false)
-{
-		_pipeStageState[DECODE].src2Val = _regFile[_pipeStageState[DECODE].cmd.src2];
-	}
-	else
-	{
-	_pipeStageState[DECODE].src2Val =  _pipeStageState[DECODE].cmd.src2 ;
-	}
-if (_pipeStageState[DECODE].cmd.opcode == CMD_STORE)
-{
-	result_dec = _regFile[_pipeStageState[DECODE].cmd.dst];
-}
-}
-
-void core::exe()
-{
-
-
-
-
-	//ALU
-	switch (this->_pipeStageState[EXECUTE].cmd.opcode)
-	{
-	case  CMD_NOP:
-	{
-		_pipeStageState[EXECUTE].src1Val = 0;
-		_pipeStageState[EXECUTE].src2Val = 0;
-	}
-	case CMD_ADD:     // dst <- src1 + src2
-	{
-		this->result_exe = this->_pipeStageState[EXECUTE].src1Val + this->_pipeStageState[EXECUTE].src2Val;
-		break;
-	}
-	case CMD_SUB:    // dst <- src1 - src2
-	{
-		this->result_exe = this->_pipeStageState[EXECUTE].src1Val - this->_pipeStageState[EXECUTE].src2Val;
-		break;
-	}
-	case CMD_LOAD:    // dst <- Mem[src1 + src2]  (src2 may be an immediate)
-	{
-	//	if (_pipeStageState[EXECUTE].cmd.isSrc2Imm == false)
-	//	{
-			result_exe= (_pipeStageState[EXECUTE].src1Val + _pipeStageState[EXECUTE].src2Val);
-	//	}
-//		else
-//	{
-		//	_pipeStageState[EXECUTE].src1Val = (_pipeStageState[EXECUTE].src1Val + _pipeStageState[EXECUTE].cmd.src2);
-	//}
-	break;
-	}
-	case CMD_STORE:  // Mem[dst + src2] <- src1  (src2 may be an immediate)
-	{
-
-		result_exe += _pipeStageState[EXECUTE].src2Val;
-
-	}
-
-	case CMD_BR:     // Unconditional relative branch to PC+dst register value
-	{
-		this->_pc += this->_pipeStageState[EXECUTE].src2Val;
-		break;
-	}
-	case CMD_BREQ:   // Branch to PC+dst if (src1 == src2)
-	{
-
-		break;
-	}
-	case CMD_BRNEQ:  // Branch to PC+dst if (src1 != src2)
-	{
-
-		break;
-	}
-	case CMD_HALT:    // Special halt command indicating a stop to the machine
-	{
-		break;
 	}
 	
 
-	}
-}
-
-int core::mem()
-{
-	switch (_pipeStageState[MEMORY].cmd.opcode)
-	{
-
-	case CMD_LOAD:
-	{
-		return	SIM_MemDataRead(_pipeStageState[MEMORY].src2Val, &result_men);
-
-	}
-	case CMD_STORE:
-
-	{
-		SIM_MemDataWrite(result_men, _pipeStageState[MEMORY].src1Val);
-		return 0;
-
-	}
-	case  CMD_BREQ:
-	{
-		if ((_pipeStageState[MEMORY].src2Val == _pipeStageState[MEMORY].src1Val))
-		{
-			_pc = _pc + _regFile[_pipeStageState[MEMORY].cmd.dst]-12;
-			_pipeStageState[DECODE].cmd.opcode = CMD_NOP;
-			_pipeStageState[DECODE].src1Val = 0;
-			_pipeStageState[DECODE].src2Val = 0;
-			_pipeStageState[FETCH].cmd.opcode = CMD_NOP;
-			_pipeStageState[FETCH].src1Val = 0;
-			_pipeStageState[FETCH].src2Val = 0;
-			_pipeStageState[EXECUTE].cmd.opcode = CMD_NOP;
-			_pipeStageState[EXECUTE].src1Val = 0;
-			_pipeStageState[EXECUTE].src2Val = 0;
+	core newcore;
 
 
-		}
-		return 0;
 
-	}
-	case  CMD_BRNEQ:
-	{
-		if ((_pipeStageState[MEMORY].src2Val != _pipeStageState[MEMORY].src1Val))
-		{
-			_pc = _pc + _regFile[_pipeStageState[MEMORY].cmd.dst]-12;
-			_pipeStageState[DECODE].cmd.opcode = CMD_NOP;
-			_pipeStageState[DECODE].src1Val = 0;
-			_pipeStageState[DECODE].src2Val = 0;
-			_pipeStageState[FETCH].cmd.opcode = CMD_NOP;
-			_pipeStageState[FETCH].src1Val = 0;
-			_pipeStageState[FETCH].src2Val = 0;
-			_pipeStageState[EXECUTE].cmd.opcode = CMD_NOP;
-			_pipeStageState[EXECUTE].src1Val = 0;
-			_pipeStageState[EXECUTE].src2Val = 0;
-
-		}
-		return 0;
-
-	}
-	}
-	return 0;
-}
-
-void core::wb()
-{
-	if (_pipeStageState[WRITEBACK].cmd.opcode == CMD_LOAD || _pipeStageState[WRITEBACK].cmd.opcode == CMD_ADD || _pipeStageState[WRITEBACK].cmd.opcode == CMD_SUB)
-	{
-		_regFile[_pipeStageState[WRITEBACK].cmd.dst] = result_wb;
-
-	}
-
-}
-
-void core::nop_stage(PipeStageState *stage)
-{
-
-	stage->cmd.opcode = CMD_NOP;
-	stage->cmd.dst = 0;
-	stage->cmd.src1 = 0;
-	stage->cmd.src2 = 0;
-	stage->cmd.isSrc2Imm = false;
-	stage->src1Val = 0;
-	stage->src2Val = 0;
-
-}
-
-
-core newcore;
 
 /*! SIM_CoreReset: Reset the processor core simulator machine to start new simulation
   Use this API to initialize the processor core simulator's data structures.
@@ -433,7 +501,7 @@ int SIM_CoreReset(void) {
 */
 void SIM_CoreClkTick() {
 	
-	newcore.CoreClock();
+	newcore.CoreClock(false,false);
 }
 
 /*! SIM_CoreGetState: Return the current core (pipeline) internal state
@@ -445,3 +513,5 @@ void SIM_CoreGetState(SIM_coreState *curState) {
 	*curState = newcore.report();
 }
 
+
+//newcore.forwd = false;
