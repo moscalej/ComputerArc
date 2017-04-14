@@ -1,0 +1,35 @@
+1a2
+> Forwarding enabled
+138,149d138
+< PC = 0xC
+< Register file:
+< 	R0 = 0x0	R1 = 0x4	R2 = 0x10	R3 = 0x0	R4 = 0x0	R5 = 0x0	R6 = 0x0	R7 = 0x0	R8 = 0x0	R9 = 0x0	R10 = 0x0	R11 = 0x0	R12 = 0x0	R13 = 0x0	R14 = 0x0	R15 = 0x0	R16 = 0x0	R17 = 0x0	R18 = 0x0	R19 = 0x0	R20 = 0x0	R21 = 0x0	R22 = 0x0	R23 = 0x0	R24 = 0x0	R25 = 0x0	R26 = 0x0	R27 = 0x0	R28 = 0x0	R29 = 0x0	R30 = 0x0	R31 = 0x0
+< Command at each pipe stage:
+< 	IF : HALT $0 , $0(=0x0) , $0(=0x0)
+< 	ID : ADD $3 , $2(=0x10) , $1(=0x4)
+< 	EXE : NOP $0 , $0(=0x0) , $0(=0x0)
+< 	MEM : NOP $0 , $0(=0x0) , $0(=0x0)
+< 	WB : LOAD $2 , $0(=0x0) , 12964(=0x32A4)
+< 
+< 
+< Simulation on cycle 12. The state is:
+158c147
+< 	WB : NOP $0 , $0(=0x0) , $0(=0x0)
+---
+> 	WB : LOAD $2 , $0(=0x0) , 12964(=0x32A4)
+161c150
+< Simulation on cycle 13. The state is:
+---
+> Simulation on cycle 12. The state is:
+173c162
+< Simulation on cycle 14. The state is:
+---
+> Simulation on cycle 13. The state is:
+185c174
+< Simulation on cycle 15. The state is:
+---
+> Simulation on cycle 14. The state is:
+195c184
+< Program successfully ran for 15 cycles
+---
+> Program successfully ran for 14 cycles

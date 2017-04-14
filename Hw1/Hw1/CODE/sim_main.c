@@ -1,8 +1,8 @@
 /* 046267 Computer Architecture - Spring 2017 - HW #1               */
 /* Main program for simulation environment testing                  */
 /* Usage: ./sim_main <image filename> <cycles> [-s|-f]           */
-#define _CRT_SECURE_NO_WARNINGS
-#include <crtdbg.h>
+
+
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,7 +49,7 @@ bool DetectHALT(SIM_coreState *state) {
 }
 
 int main(int argc, char const *argv[]) {
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	
     int i, simDuration;
     forwarding = false;
     split_regfile = false;
