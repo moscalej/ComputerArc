@@ -6,20 +6,50 @@
 // Global variables
 
 //static int mem_hazard = 0;
+
+/* core : this is the class that difenes our processor and emulates a real procesor as close as posible
+		 
+
+*/
 class core
 {
 public:
+
+	/*The constructor will inicial core fill with nop instructions and one the first fetch*/
 	core();
 	~core();
+
+
 	void CoreClock();
+
+	/*The Reset() method will set to the same state as the the constructor */
 	void Reset();
+
+	/*The report() method will fill a new report based on the data of the Core 
+		meaning it will copy the PipeStage of each module and the value of eacho register
+		into a new strut this provide our core security of external factors*/
 	SIM_coreState report() ;
-	void nop_stage(PipeStageState *stage);
+
+	
 	
 private:
 
+	/*The nop_stage(PipeStageState) method sets a nop on the given stage of our core
+		its used by the CoreClock*/
+	void nop_stage(PipeStageState *stage);
+
+	/*these are registers used to store results needit after each module*/
 	int result_exe, result_dec, result_men, result_wb;
 	
+	/*These are the basic modules of the mips core learn on class each of then emulates a module as close as posible to the one on the MIPS
+		fetch: use the memory Api to read the next comand from the instruction memory
+		id: emulates the Decode of the mips, from the instruction set given a clock before it will read the values of the register given and 
+			store then on the srvalue of the coresponding register
+		exe: depending of the command passed on the last cycle the execute module will do the math operation need it
+			and will store the result on the result register
+		mem: depeding on the command will save,load, or just pass the value to the next result register
+		wb: will store the the wanted value in one of the core registers (_regFile)
+	*/
 	void fetch();
 	void id();
 	void exe();
@@ -300,6 +330,7 @@ SIM_coreState core::report()
 
 void core::fetch()
 {
+	
 	SIM_MemInstRead(_pc, &_pipeStageState[FETCH].cmd);
 	_pipeStageState[FETCH].src1Val = 0;
 	_pipeStageState[FETCH].src2Val = 0;
@@ -352,14 +383,9 @@ void core::exe()
 	}
 	case CMD_LOAD:    // dst <- Mem[src1 + src2]  (src2 may be an immediate)
 	{
-	//	if (_pipeStageState[EXECUTE].cmd.isSrc2Imm == false)
-	//	{
+	
 			result_exe= (_pipeStageState[EXECUTE].src1Val + _pipeStageState[EXECUTE].src2Val);
-	//	}
-//		else
-//	{
-		//	_pipeStageState[EXECUTE].src1Val = (_pipeStageState[EXECUTE].src1Val + _pipeStageState[EXECUTE].cmd.src2);
-	//}
+		
 	break;
 	}
 	case CMD_STORE:  // Mem[dst + src2] <- src1  (src2 may be an immediate)
