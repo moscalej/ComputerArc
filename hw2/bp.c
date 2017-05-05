@@ -2,7 +2,9 @@
 /* This file should hold your implementation of the predictor simulator */
 
 #include "bp_api.h"
+class BPBase {
 
+};
 int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
              bool isGlobalHist, bool isGlobalTable, bool isShare){
 	return -1;
