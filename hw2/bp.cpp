@@ -89,7 +89,6 @@ private:
 T_B_Table::T_B_Table(int size) {
     this->_size = size;
 }
-
 STATES T_B_Table::read_state_at(int adress) {
     if (adress >= 0 && adress < _size) {
         return this->state_machine[adress].is_taken();
@@ -101,6 +100,12 @@ void T_B_Table::update_state_at(int adress, STATES branch_answer) {
     this->state_machine[adress].set_taken(branch_answer);
 
 }
+
+
+
+
+
+
 
 
 int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
