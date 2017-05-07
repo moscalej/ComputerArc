@@ -7,9 +7,8 @@
 
 //static int mem_hazard = 0;
 
-/* core : this is the class that difenes our processor and emulates a real procesor as close as posible
-		 
-
+/*
+core : this is the class that difenes our processor and emulates a real procesor as close as posible
 */
 class core
 {
@@ -29,8 +28,6 @@ public:
 		meaning it will copy the PipeStage of each module and the value of eacho register
 		into a new strut this provide our core security of external factors*/
 	SIM_coreState report() ;
-
-	
 	
 private:
 
@@ -60,9 +57,6 @@ private:
 	int32_t _regFile[SIM_REGFILE_SIZE];
 	int32_t _pc;
 	PipeStageState wbBuffer;
-
-
-
 };
 
 core::core()
@@ -143,6 +137,8 @@ void core::CoreClock()
 		}
 
 	}
+	
+	
 	if (split_regfile == true && forwarding == false)
 		
 	{
@@ -196,9 +192,7 @@ void core::CoreClock()
 
 	}
 
-
 	//HDU
-
 
 	if (forwarding == true)
 	{
@@ -290,7 +284,6 @@ void core::CoreClock()
 
 	}
 }
-
 
 void core::Reset()
 {
@@ -502,7 +495,6 @@ void core::nop_stage(PipeStageState *stage)
 
 }
 
-
 core newcore;
 
 /*! SIM_CoreReset: Reset the processor core simulator machine to start new simulation
@@ -535,4 +527,3 @@ void SIM_CoreGetState(SIM_coreState *curState) {
 
 	*curState = newcore.report();
 }
-

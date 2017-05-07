@@ -2,12 +2,34 @@
 /* This file should hold your implementation of the predictor simulator */
 
 #include "bp_api.h"
-
+#include <cmath>
+#include <iostream>
 //some coments
 
 //#define MAX_ITEMS 10000;
 enum STATES{ NOTTAKEN, TAKEN};
 enum BRTYPES{SNT,WNT,WT,ST};
+
+int bits_to_take(int lsb, int number_of_bits, int address){
+    int temp=0;
+    int temp2=0;
+    for (int j = 0; j < lsb; ++j) {
+        address= address/2;
+    }
+
+
+
+    for (int i = 0; i < number_of_bits; i++) {
+        if(address ==0 ) break;
+        temp2 = address % 2;
+        address = address/2;
+        temp2 = temp2 * (int)pow((double)( 2),(double)i);
+        temp = temp + temp2;
+    }
+    return temp;
+
+}
+
 
 //todo set or pass the sise limit for all the variables
 
@@ -26,20 +48,33 @@ class T_B_Counter{
 void T_B_Counter::set_taken(STATES last_branch_result) {
 
     if(last_branch_result == TAKEN){
-        if (_current_state!= ST) {
-            _current_state++;
+        switch(_current_state){
+            case SNT : _current_state= WNT;break;
+            case WNT:_current_state =WT;break;
+            case WT:_current_state =ST;break;
+            case ST:_current_state = ST;break;
         }
+
     }else{
-        if(_current_state!= SNT) {
-            _current_state--;
+        switch(_current_state){
+            case SNT :
+                this->_current_state= SNT;
+                break;
+            case WNT:
+                this->_current_state =   SNT;
+                break;
+            case WT:
+                this->_current_state =WNT;
+                break;
+            case ST:
+                this->_current_state = WT;
+                break;
         }
     }
 
-
-    return ;
 }
 STATES T_B_Counter::is_taken() {
-    return (_current_state>WNT)? TAKEN : NOTTAKEN;
+    return (_current_state==WT || _current_state== ST)? TAKEN : NOTTAKEN;
 }
 
 
@@ -61,20 +96,21 @@ void BranchHistoryRegister::init_BHR(int size) {
 
 }
 void BranchHistoryRegister::update_lsb(STATES state) {
-    for (int i = 0; i < _size - 1; ++i) {
+    for (int i = 0; i < _size-1 ; ++i) {
         _BHR[i] = _BHR[i+1];
     }
-    _BHR[_size]= state;
+    _BHR[_size-1]= state;
 }
-//todo check if we can use ^ in this hw
 int BranchHistoryRegister::get_address() {
-    int temp =0;
+    int temp = 0;
     for (int i = 0; i < _size; ++i) {
-        temp= temp + (_BHR[i] *(2^i));
+        temp = temp + this->_BHR[_size -1 - i] * (int) pow(2, i);
     }
     return temp;
-
 }
+
+
+
 
 class BranchTableBuffer{
 public:
@@ -100,6 +136,9 @@ STATES BranchTableBuffer::read_state_at(int adress) {
     return NOTTAKEN;
 }
 void BranchTableBuffer::update_state_at(int adress, STATES branch_answer) {
+    if (adress>=_size){
+        std::cout<<"error"<<std::endl;
+        return;}
     this->state_machine[adress].set_taken(branch_answer);
 
 }
@@ -112,8 +151,14 @@ void BranchTableBuffer::update_tag_adrress(int tag, int destination) {
 
 
 
+
 class CacheHistory{
 public:
+    /**
+     *
+     * @param size_CH -this is the size of the cache history in number of cache history stamps
+     * @param size_BHR -this is the size of bits that the Branch History Register has
+     */
     void init_CH(int size_CH, int size_BHR);
     int tag_from_BHR(int address);
     void add_last_prediction_to_address(int address, STATES last_predicion);
@@ -153,6 +198,8 @@ private:
     int _size_BTB;
     int _size_BHR;
     int _size_CH;
+
+
 };
 
 int LocalBranchPredictor::pc_destination_from_tag(int tag) {
