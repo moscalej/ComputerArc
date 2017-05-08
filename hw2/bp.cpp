@@ -193,8 +193,8 @@ private:
 int BranchTargetBuffer::get_address_from_pc(int pc) {
 
     int temp = bits_to_take(2,this->_pc_size,pc);
-
-    return (pc>=0 && pc<_size)?this->_target[temp]:(-1);
+    int new_tap = bits_to_take(2,this->_tag_size,pc);
+    return (new_tap == _tag[temp])?_target[temp]:-1;
 }
 void BranchTargetBuffer::init_BTB(int size_BTB, int size_BHR, int tag_size) {
     this->_size=size_BTB;
@@ -271,11 +271,13 @@ protected:
     bool _bool_isShare;
     unsigned int _size_history;
     unsigned int _size_tag;
+    int _sise_pc;
 };
 
 void BranchPredictorUnit::init_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist,
                                    bool isGlobalTable, bool isShare) {
     this->_size_BTB = btbSize;
+    this->_sise_pc = (int)log2(btbSize);
     this->_size_history=historySize;
     this->_size_tag=tagSize;
     this->_bool_GlobalHist = isGlobalHist;
@@ -336,7 +338,7 @@ STATES BranchPredictorUnit::get_BMA_awnser(int pc, int BMA_target) {
 }
 
 void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
-    int short_pc = bits_to_take(2,this->_size_BTB,pc);
+    int short_pc = bits_to_take(2,this->_sise_pc,pc);
     int new_tag = bits_to_take(2,_size_tag,pc);
     int xor_pc = bits_to_take(2,_size_history,pc);
     int get_place =_BTB.get_place_BMA(pc);
