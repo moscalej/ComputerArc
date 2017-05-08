@@ -46,7 +46,9 @@ class T_B_Counter{
     void set_taken(STATES last_branch_result);
     STATES is_taken();
 
-    private:
+    void reset();
+
+private:
     BRTYPES _current_state;
 
 };
@@ -83,6 +85,10 @@ STATES T_B_Counter::is_taken() {
     return (_current_state==WT || _current_state== ST)? TAKEN : NOTTAKEN;
 }
 
+void T_B_Counter::reset() {
+    this->_current_state=WNT;
+
+}
 
 
 class  BranchHistoryRegister{
@@ -129,7 +135,7 @@ void BranchHistoryRegister::flush() {
 
 class BiModalArray{
 public:
-    void init_BTB(int size);
+    void init_BMA(int size);
 
     void update_state_at(int adress, STATES branch_answer);
     STATES read_state_at(int adress);
@@ -139,8 +145,11 @@ private:
 
 };
 
-void BiModalArray::init_BTB(int size) {
+void BiModalArray::init_BMA(int size) {
     this->_size = size;
+    for (int i = 0; i < _size; ++i) {
+        this->state_machine[i].reset();
+    }
 }
 STATES BiModalArray::read_state_at(int adress) {
     if (adress >= 0 && adress < _size) {
@@ -167,39 +176,44 @@ public:
      * @param size_CH -this is the size of the cache history in number of cache history stamps
      * @param size_BHR -this is the size of bits that the Branch History Register has
      */
-    void init_BTB(int size_CH, int size_BHR, int btb_size, int tag_size);
+    void init_BTB(int size_BTB, int size_BHR, int tag_size);
     int get_address_from_pc(int pc);
     int get_place_BMA(int pc);
-    void update_at_pc(int pc, STATES last_prediction, int target_address, bool flush_history);
+    void update_at_pc(int pc, STATES last_prediction, int target_address);
+    void update_global(STATES branch_awser, int pc, int target_address);
 private:
     int _size;
     BranchHistoryRegister BHR[MAX_TAG_ITEMS];
     int _target[MAX_TAG_ITEMS];
     int _tag[MAX_TAG_ITEMS];
-    int _btb_size;
+    int _pc_size;
     int _tag_size;
 };
 
 int BranchTargetBuffer::get_address_from_pc(int pc) {
 
-    int temp = bits_to_take(2,this->_btb_size,pc);
+    int temp = bits_to_take(2,this->_pc_size,pc);
 
     return (pc>=0 && pc<_size)?this->_target[temp]:(-1);
 }
-void BranchTargetBuffer::init_BTB(int size_BTB, int size_BHR, int btb_size, int tag_size) {
+void BranchTargetBuffer::init_BTB(int size_BTB, int size_BHR, int tag_size) {
     this->_size=size_BTB;
-    this->_btb_size=btb_size;
+    this->_pc_size= (int)log2(size_BTB);
     this->_tag_size=tag_size;
 
     for (int i = 0; i <_size ; ++i) {
         BHR[i].init_BHR(size_BHR);
+        _target[i]=0;
+        _tag[i]=0;
     }
 
+
+
 }
-void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target_address, bool flush_history) {
-    int short_pc = bits_to_take(2,this->_btb_size,pc);
+void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target_address) {
+    int short_pc = bits_to_take(2,this->_pc_size,pc);
     int new_tag = bits_to_take(2,this->_tag_size,pc);
-    if (flush_history){
+    if (new_tag!=_tag[short_pc]){
         this->BHR[short_pc].flush();
         this->_tag[short_pc]= new_tag;
         this->_target[short_pc]= target_address;
@@ -209,7 +223,7 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
 
 }
 int BranchTargetBuffer::get_place_BMA(int pc) {
-    int short_pc = bits_to_take(2,this->_btb_size,pc);
+    int short_pc = bits_to_take(2,this->_pc_size,pc);
     int new_tag = bits_to_take(2,this->_tag_size,pc );
     if(this->_tag[short_pc] == new_tag ){
         return this->BHR[short_pc].get_address();
@@ -217,87 +231,28 @@ int BranchTargetBuffer::get_place_BMA(int pc) {
     return -1;
 }
 
+void BranchTargetBuffer::update_global(STATES branch_awser, int pc, int target_address) {
+    int short_pc = bits_to_take(2,_pc_size,pc);
+    int new_tag = bits_to_take(2,_tag_size,pc);
+    for (int i = 0; i < _size; ++i) {
+        this->BHR->update_lsb(branch_awser);
 
-class LocalBranchPredictor{
+    }
+    this->_target[short_pc]= target_address;
+    this->_tag[short_pc]= new_tag;
 
-public:
-    void init_LBP(int size_CH, int size_BHR, int size_BTB);
-    int pc_destination_from_tag(int tag_pc);
-    void update_prediction(int pc_tag, STATES last_prediction_state, int last_branch_jump);
-
-
-private:
-
-    BranchTargetBuffer CH;
-    BiModalArray BTB;
-    int _size_BTB;
-    int _size_BHR;
-    int _size_CH;
-
-
-};
-
-int LocalBranchPredictor::pc_destination_from_tag(int tag_pc) {
-    return this->BTB.adress_predicted_from_tag(this->CH.get_address_from_pc(tag_pc));
-}
-void LocalBranchPredictor::update_prediction(int pc_tag, STATES last_prediction_state, int last_branch_jump) {
-    int temp_address;
-    temp_address = this->CH.get_address_from_pc(pc_tag);
-    this->CH.update_at_pc(pc_tag, last_prediction_state, 0, false);
-    this->BTB.update_state_at(temp_address,last_prediction_state);
-    this->BTB.update_tag_adrress(temp_address,last_branch_jump);
-
-}
-
-void LocalBranchPredictor::init_LBP(int size_CH, int size_BHR, int size_BTB) {
-    CH.init_BTB(size_CH, size_BHR, 0, 0);
-    BTB.init_BTB(size_BTB);
-    this->_size_CH=size_CH;
-    this->_size_BHR=size_BHR;
-    this->_size_BTB = size_BTB;
-}
-
-
-class GlobalBranchPredictor{
-public:
-    void ini_GBP(int size_BHR, int size_BTB);
-    int predic_address_from_ip_tag();
-    void update_history(STATES branch_answer, int branch_address);
-
-private:
-    BranchHistoryRegister BHR;
-    BiModalArray BTB;
-    int _size_BHR;
-    int _size_BTB;
-};
-
-int GlobalBranchPredictor::predic_address_from_ip_tag() {
-    return BTB.adress_predicted_from_tag(BHR.get_address());
-}
-void GlobalBranchPredictor::update_history(STATES branch_answer, int branch_address) {
-    this->BTB.update_tag_adrress(BHR.get_address(),branch_address);
-    this->BTB.update_state_at(BHR.get_address(), branch_answer);
-    this->BHR.update_lsb(branch_answer);
-}
-void GlobalBranchPredictor::ini_GBP(int size_BHR, int size_BTB) {
-    BTB.init_BTB(size_BTB);
-    BHR.init_BHR(size_BHR);
-    this->_size_BHR = size_BHR;
-    this->_size_BTB = size_BTB;
 
 }
 
 
 class BranchPredictorUnit{
 public:
-    void ini_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize,
-                 bool isGlobalHist, bool isGlobalTable, bool isShare);
+    void init_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize,
+                  bool isGlobalHist, bool isGlobalTable, bool isShare);
 
     bool predict_BPU(uint32_t pc, uint32_t &dst);
 
-    void update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst){
-        return;
-    }
+    void update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst);
 
     void GetStats_BP(SIM_stats *curStats) {
         return;
@@ -305,34 +260,80 @@ public:
 
 protected:
 
+    SIM_stats machine_stats;
+
+    STATES get_BMA_awnser(int pc,int BMA_target);
+    int get_target(int pc);
+    int get_BMA_index(int pc);
 	BranchTargetBuffer _BTB;
 	BiModalArray _BMA[MAX_TAG_ITEMS];
     unsigned int _size_BTB;
     bool _bool_GlobalHist;
     bool _bool_GlobalTable;
     bool _bool_isShare;
+    unsigned int _size_history;
+    unsigned int _size_tag;
 };
 
-void BranchPredictorUnit::ini_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist,
-                                  bool isGlobalTable, bool isShare) {
+void BranchPredictorUnit::init_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist,
+                                   bool isGlobalTable, bool isShare) {
     this->_size_BTB = btbSize;
-  
+    this->_size_history=historySize;
+    this->_size_tag=tagSize;
     this->_bool_GlobalHist = isGlobalHist;
     this->_bool_GlobalTable =isGlobalTable;
     this->_bool_isShare = isShare;
-    this->_BTB.init_BTB(_size_BHR,_size_BTB);
-    this->LBP.init_LBP(_size_CH,_size_BHR,_size_BTB);
+    this->_BTB.init_BTB(btbSize,historySize,tagSize);
+    for (int i = 0; i <_size_BTB ; ++i) {
+        _BMA[i].init_BMA((int)pow(2,(double)historySize));
+    }
+
 
 }
 
 bool BranchPredictorUnit::predict_BPU(uint32_t pc, uint32_t &dst) {
-    int pc_short = bits_to_take(2,_size_CH,pc);
-    if(_bool_GlobalHist){
-        dst = (uint32_t)GBP.predic_address_from_ip_tag();
-        return true;
-    }else if(_bool_GlobalTable){
-        dst = (uint32_t)LBP.pc_destination_from_tag(pc_short);
+    int temp = get_target(pc);
+    if (temp == -1){
+        dst =pc +4;
+        return false;
     }
+    int index_BMA = get_BMA_index(pc);
+    STATES result =get_BMA_awnser(pc,index_BMA);
+    dst =(uint32_t)(result == TAKEN)?(uint32_t)temp:(pc +4);
+    return result == TAKEN;
+
+}
+
+int BranchPredictorUnit::get_target(int pc) {
+    int target=this->_BTB.get_address_from_pc(pc);
+
+    return target;
+}
+
+int BranchPredictorUnit::get_BMA_index(int pc) {
+    this->_BTB.get_place_BMA(pc);
+
+}
+
+STATES BranchPredictorUnit::get_BMA_awnser(int pc, int BMA_target) {
+    int new_tag =bits_to_take(2,_size_tag,pc);
+    int xor_pc = bits_to_take(2,_size_history,pc);
+    return this->_BMA[(_bool_GlobalTable)?0:new_tag].read_state_at((_bool_isShare)?(BMA_target^xor_pc):BMA_target);
+
+}
+
+void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
+    int new_tag = bits_to_take(2,_size_tag,pc);
+    int xor_pc = bits_to_take(2,_size_history,pc);
+    int place_BMA =(_bool_isShare)?(_BTB.get_place_BMA(pc)^xor_pc):_BTB.get_place_BMA(pc);
+    STATES is_taken = (taken)?TAKEN:NOTTAKEN;
+
+    if(_bool_GlobalHist){
+        this->_BTB.update_global(is_taken , pc, targetPc);
+    }else{
+        _BTB.update_at_pc(pc, is_taken, targetPc);
+    }
+    _BMA[(_bool_GlobalTable)?0:new_tag].update_state_at(place_BMA,is_taken);
 }
 
 
