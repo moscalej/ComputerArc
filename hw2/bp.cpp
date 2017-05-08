@@ -5,7 +5,7 @@
 #include <cmath>
 #include <iostream>
 //some coments
-
+#define MAX_BI_MODAL 256
 #define MAX_TAG_ITEMS 100
 #define MAX_HISTORY_BITS 32
 
@@ -35,6 +35,10 @@ int bits_to_take(int lsb, int number_of_bits, int address){
 
 //todo set or pass the sise limit for all the variables
 
+
+/**
+ * This class is the bimodal
+ */
 class T_B_Counter{
     public:
 
@@ -80,11 +84,15 @@ STATES T_B_Counter::is_taken() {
 }
 
 
+
 class  BranchHistoryRegister{
 public:
     void init_BHR(int size);
     void update_lsb(STATES state );
     int get_address();
+
+    void flush();
+
 private:
     int _size ;
     STATES _BHR[MAX_HISTORY_BITS];
@@ -111,76 +119,102 @@ int BranchHistoryRegister::get_address() {
     return temp;
 }
 
+void BranchHistoryRegister::flush() {
+    for (int i = 0; i < _size; ++i) {
+        _BHR[i]=NOTTAKEN;
+    }
+
+}
 
 
-
-class BranchTableBuffer{
+class BiModalArray{
 public:
     void init_BTB(int size);
-    int adress_predicted_from_tag(int tag);
-    void update_tag_adrress(int tag,int destination);
+
     void update_state_at(int adress, STATES branch_answer);
-private:
     STATES read_state_at(int adress);
+private:
     int _size ;
-    T_B_Counter state_machine[MAX_TAG_ITEMS];
-    int _target[MAX_TAG_ITEMS];
+    T_B_Counter state_machine[MAX_BI_MODAL];
+
 };
 
-void BranchTableBuffer::init_BTB(int size) {
+void BiModalArray::init_BTB(int size) {
     this->_size = size;
 }
-STATES BranchTableBuffer::read_state_at(int adress) {
+STATES BiModalArray::read_state_at(int adress) {
     if (adress >= 0 && adress < _size) {
         return this->state_machine[adress].is_taken();
 
     }
     return NOTTAKEN;
 }
-void BranchTableBuffer::update_state_at(int adress, STATES branch_answer) {
+void BiModalArray::update_state_at(int adress, STATES branch_answer) {
     if (adress>=_size){
         std::cout<<"error"<<std::endl;
         return;}
     this->state_machine[adress].set_taken(branch_answer);
 
 }
-int BranchTableBuffer::adress_predicted_from_tag(int tag) {
-    return (this->read_state_at(tag) == TAKEN)? this->_target[tag]: (-1);
-}
-void BranchTableBuffer::update_tag_adrress(int tag, int destination) {
-    this->_target[tag]=destination;
-}
 
 
 
 
-class CacheHistory{
+class BranchTargetBuffer{
 public:
     /**
      *
      * @param size_CH -this is the size of the cache history in number of cache history stamps
      * @param size_BHR -this is the size of bits that the Branch History Register has
      */
-    void init_CH(int size_CH, int size_BHR);
-    int tag_from_BHR(int address);
-    void add_last_prediction_to_address(int address, STATES last_predicion);
+    void init_CH(int size_CH, int size_BHR, int btb_size, int tag_size);
+    int get_address_from_pc(int pc);
+    int get_place_BMA(int pc);
+    void update_at_pc(int pc, STATES last_prediction, int target_address, bool flush_history);
 private:
     int _size;
     BranchHistoryRegister BHR[MAX_TAG_ITEMS];
+    int _target[MAX_TAG_ITEMS];
+    int _tag[MAX_TAG_ITEMS];
+    int _btb_size;
+    int _tag_size;
 };
 
-int CacheHistory::tag_from_BHR(int address) {
-    return (address>=0 && address<_size)?this->BHR[address].get_address():(-1);
+int BranchTargetBuffer::get_address_from_pc(int pc) {
+
+    int temp = bits_to_take(2,this->_btb_size,pc);
+
+    return (pc>=0 && pc<_size)?this->_target[temp]:(-1);
 }
-void CacheHistory::add_last_prediction_to_address(int address, STATES last_predicion) {
-    this->BHR[address].update_lsb(last_predicion);
-}
-void CacheHistory::init_CH(int size_CH, int size_BHR) {
+void BranchTargetBuffer::init_CH(int size_CH, int size_BHR, int btb_size, int tag_size) {
     this->_size=size_CH;
+    this->_btb_size=btb_size;
+    this->_tag_size=tag_size;
+
     for (int i = 0; i <_size ; ++i) {
         BHR[i].init_BHR(size_BHR);
     }
 
+}
+void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target_address, bool flush_history) {
+    int short_pc = bits_to_take(2,this->_btb_size,pc);
+    int new_tag = bits_to_take(2,this->_tag_size,pc);
+    if (flush_history){
+        this->BHR[short_pc].flush();
+        this->_tag[short_pc]= new_tag;
+        this->_target[short_pc]= target_address;
+        return;
+    }
+    this->BHR[short_pc].update_lsb(last_prediction);
+
+}
+int BranchTargetBuffer::get_place_BMA(int pc) {
+    int short_pc = bits_to_take(2,this->_btb_size,pc);
+    int new_tag = bits_to_take(2,this->_tag_size,pc );
+    if(this->_tag[short_pc] == new_tag ){
+        return this->BHR[short_pc].get_address();
+    }
+    return -1;
 }
 
 
@@ -194,8 +228,8 @@ public:
 
 private:
 
-    CacheHistory CH;
-    BranchTableBuffer BTB;
+    BranchTargetBuffer CH;
+    BiModalArray BTB;
     int _size_BTB;
     int _size_BHR;
     int _size_CH;
@@ -204,18 +238,18 @@ private:
 };
 
 int LocalBranchPredictor::pc_destination_from_tag(int tag_pc) {
-    return this->BTB.adress_predicted_from_tag(this->CH.tag_from_BHR(tag_pc));
+    return this->BTB.adress_predicted_from_tag(this->CH.get_address_from_pc(tag_pc));
 }
 void LocalBranchPredictor::update_prediction(int pc_tag, STATES last_prediction_state, int last_branch_jump) {
     int temp_address;
-    temp_address = this->CH.tag_from_BHR(pc_tag);
-    this->CH.add_last_prediction_to_address(pc_tag, last_prediction_state);
+    temp_address = this->CH.get_address_from_pc(pc_tag);
+    this->CH.update_at_pc(pc_tag, last_prediction_state, 0, false);
     this->BTB.update_state_at(temp_address,last_prediction_state);
     this->BTB.update_tag_adrress(temp_address,last_branch_jump);
 
 }
 void LocalBranchPredictor::init_LBP(int size_CH, int size_BHR, int size_BTB) {
-    CH.init_CH(size_CH,size_BHR);
+    CH.init_CH(size_CH, size_BHR, 0, 0);
     BTB.init_BTB(size_BTB);
     this->_size_CH=size_CH;
     this->_size_BHR=size_BHR;
@@ -231,7 +265,7 @@ public:
 
 private:
     BranchHistoryRegister BHR;
-    BranchTableBuffer BTB;
+    BiModalArray BTB;
     int _size_BHR;
     int _size_BTB;
 };
