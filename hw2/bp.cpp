@@ -6,7 +6,9 @@
 #include <iostream>
 //some coments
 
-//#define MAX_ITEMS 10000;
+#define MAX_TAG_ITEMS 100
+#define MAX_HISTORY_BITS 32
+
 enum STATES{ NOTTAKEN, TAKEN};
 enum BRTYPES{SNT,WNT,WT,ST};
 
@@ -85,7 +87,7 @@ public:
     int get_address();
 private:
     int _size ;
-    STATES _BHR[100];
+    STATES _BHR[MAX_HISTORY_BITS];
 };
 
 void BranchHistoryRegister::init_BHR(int size) {
@@ -121,8 +123,8 @@ public:
 private:
     STATES read_state_at(int adress);
     int _size ;
-    T_B_Counter state_machine[10000];
-    int _target[10000];
+    T_B_Counter state_machine[MAX_TAG_ITEMS];
+    int _target[MAX_TAG_ITEMS];
 };
 
 void BranchTableBuffer::init_BTB(int size) {
@@ -164,7 +166,7 @@ public:
     void add_last_prediction_to_address(int address, STATES last_predicion);
 private:
     int _size;
-    BranchHistoryRegister BHR[1000];
+    BranchHistoryRegister BHR[MAX_TAG_ITEMS];
 };
 
 int CacheHistory::tag_from_BHR(int address) {
