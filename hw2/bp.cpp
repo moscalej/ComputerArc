@@ -254,9 +254,8 @@ public:
 
     void update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst);
 
-    void GetStats_BP(SIM_stats *curStats) {
-        return;
-    }
+    void GetStats_BP(SIM_stats &curStats) ;
+
 
 protected:
 
@@ -286,8 +285,21 @@ void BranchPredictorUnit::init_BPU(unsigned btbSize, unsigned historySize, unsig
     this->_BTB.init_BTB(btbSize,historySize,tagSize);
     for (int i = 0; i <_size_BTB ; ++i) {
         _BMA[i].init_BMA((int)pow(2,(double)historySize));
+
     }
 
+
+    if(!_bool_GlobalTable && !_bool_GlobalHist){
+        machine_stats.size = _size_BTB *(_size_tag + 30 +_size_history + 2* (int)pow(2,_size_history));
+    }else if(_bool_GlobalTable && _bool_GlobalHist){
+        machine_stats.size = _size_BTB *(_size_tag + 30) +_size_history + 2* (int)pow(2,_size_history);
+
+    }else if (_bool_GlobalTable && !_bool_GlobalHist)
+    {
+        machine_stats.size = _size_BTB *(_size_tag + 30 +_size_history )+ 2* (int)pow(2,_size_history);
+    }else if (!_bool_GlobalTable && _bool_GlobalHist){
+        machine_stats.size = _size_BTB *(_size_tag + 30 + 2* (int)pow(2,_size_history))+_size_history ;
+    }
 
 }
 
@@ -300,6 +312,8 @@ bool BranchPredictorUnit::predict_BPU(uint32_t pc, uint32_t &dst) {
     int index_BMA = get_BMA_index(pc);
     STATES result =get_BMA_awnser(pc,index_BMA);
     dst =(uint32_t)(result == TAKEN)?(uint32_t)temp:(pc +4);
+
+
     return result == TAKEN;
 
 }
@@ -326,30 +340,50 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
     int new_tag = bits_to_take(2,_size_tag,pc);
     int xor_pc = bits_to_take(2,_size_history,pc);
     int place_BMA =(_bool_isShare)?(_BTB.get_place_BMA(pc)^xor_pc):_BTB.get_place_BMA(pc);
+
+    machine_stats.br_num++;
+
     STATES is_taken = (taken)?TAKEN:NOTTAKEN;
 
-    if(_bool_GlobalHist){
-        this->_BTB.update_global(is_taken , pc, targetPc);
-    }else{
-        _BTB.update_at_pc(pc, is_taken, targetPc);
+        if (_bool_GlobalHist) {
+            this->_BTB.update_global(is_taken, pc, targetPc);
+        } else {
+            _BTB.update_at_pc(pc, is_taken, targetPc);
+
+
     }
-    _BMA[(_bool_GlobalTable)?0:new_tag].update_state_at(place_BMA,is_taken);
+    if (_BMA[(_bool_GlobalTable) ? 0 : new_tag].read_state_at(place_BMA)!=is_taken)
+    {
+        machine_stats.flush_num++;
+    }
+    _BMA[(_bool_GlobalTable) ? 0 : new_tag].update_state_at(place_BMA, is_taken);
+
 }
+
+void BranchPredictorUnit::GetStats_BP(SIM_stats &curStats) {
+    curStats = this->machine_stats;
+
+}
+
+BranchPredictorUnit BPU;
+
 
 
 int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
              bool isGlobalHist, bool isGlobalTable, bool isShare){
-	return -1;
+    BPU.init_BPU(btbSize,historySize,tagSize,isGlobalHist,isGlobalTable,isShare);
+
+	return 0;
 }
 
 bool BP_predict(uint32_t pc, uint32_t *dst){
-	return false;
+    return  BPU.predict_BPU(pc,*dst);
 }
 
 void BP_update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst){
-	return;
+	return BPU.update_BP(pc,targetPc,taken,pred_dst);
 }
 
 void BP_GetStats(SIM_stats *curStats) {
-	return;
+	return BPU.GetStats_BP(*curStats);
 }
