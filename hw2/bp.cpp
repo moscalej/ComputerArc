@@ -167,7 +167,7 @@ public:
      * @param size_CH -this is the size of the cache history in number of cache history stamps
      * @param size_BHR -this is the size of bits that the Branch History Register has
      */
-    void init_CH(int size_CH, int size_BHR, int btb_size, int tag_size);
+    void init_BTB(int size_CH, int size_BHR, int btb_size, int tag_size);
     int get_address_from_pc(int pc);
     int get_place_BMA(int pc);
     void update_at_pc(int pc, STATES last_prediction, int target_address, bool flush_history);
@@ -186,8 +186,8 @@ int BranchTargetBuffer::get_address_from_pc(int pc) {
 
     return (pc>=0 && pc<_size)?this->_target[temp]:(-1);
 }
-void BranchTargetBuffer::init_CH(int size_CH, int size_BHR, int btb_size, int tag_size) {
-    this->_size=size_CH;
+void BranchTargetBuffer::init_BTB(int size_BTB, int size_BHR, int btb_size, int tag_size) {
+    this->_size=size_BTB;
     this->_btb_size=btb_size;
     this->_tag_size=tag_size;
 
@@ -250,7 +250,7 @@ void LocalBranchPredictor::update_prediction(int pc_tag, STATES last_prediction_
 }
 
 void LocalBranchPredictor::init_LBP(int size_CH, int size_BHR, int size_BTB) {
-    CH.init_CH(size_CH, size_BHR, 0, 0);
+    CH.init_BTB(size_CH, size_BHR, 0, 0);
     BTB.init_BTB(size_BTB);
     this->_size_CH=size_CH;
     this->_size_BHR=size_BHR;
@@ -305,11 +305,9 @@ public:
 
 protected:
 
-    LocalBranchPredictor LBP;
-    GlobalBranchPredictor GBP;
+	BranchTargetBuffer _BTB;
+	BiModalArray _BMA[MAX_TAG_ITEMS];
     unsigned int _size_BTB;
-    unsigned int _size_BHR;
-    unsigned int _size_CH;
     bool _bool_GlobalHist;
     bool _bool_GlobalTable;
     bool _bool_isShare;
@@ -318,12 +316,11 @@ protected:
 void BranchPredictorUnit::ini_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist,
                                   bool isGlobalTable, bool isShare) {
     this->_size_BTB = btbSize;
-    this->_size_BHR = historySize;
-    this->_size_CH = tagSize;
+  
     this->_bool_GlobalHist = isGlobalHist;
     this->_bool_GlobalTable =isGlobalTable;
     this->_bool_isShare = isShare;
-    this->GBP.ini_GBP(_size_BHR,_size_BTB);
+    this->_BTB.init_BTB(_size_BHR,_size_BTB);
     this->LBP.init_LBP(_size_CH,_size_BHR,_size_BTB);
 
 }
