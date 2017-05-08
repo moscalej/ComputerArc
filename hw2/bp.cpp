@@ -159,7 +159,7 @@ STATES BiModalArray::read_state_at(int adress) {
     return NOTTAKEN;
 }
 void BiModalArray::update_state_at(int adress, STATES branch_answer) {
-    if (adress>=_size){
+    if (adress==-1){
         std::cout<<"error"<<std::endl;
         return;}
     this->state_machine[adress].set_taken(branch_answer);
@@ -224,11 +224,10 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
 }
 int BranchTargetBuffer::get_place_BMA(int pc) {
     int short_pc = bits_to_take(2,this->_pc_size,pc);
-    int new_tag = bits_to_take(2,this->_tag_size,pc );
-    if(this->_tag[short_pc] == new_tag ){
-        return this->BHR[short_pc].get_address();
-    }
-    return -1;
+
+    return this->BHR[short_pc].get_address();
+
+
 }
 
 void BranchTargetBuffer::update_global(STATES branch_awser, int pc, int target_address) {
@@ -325,7 +324,7 @@ int BranchPredictorUnit::get_target(int pc) {
 }
 
 int BranchPredictorUnit::get_BMA_index(int pc) {
-    this->_BTB.get_place_BMA(pc);
+    return  this->_BTB.get_place_BMA(pc);
 
 }
 
@@ -337,9 +336,11 @@ STATES BranchPredictorUnit::get_BMA_awnser(int pc, int BMA_target) {
 }
 
 void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
+    int short_pc = bits_to_take(2,this->_size_BTB,pc);
     int new_tag = bits_to_take(2,_size_tag,pc);
     int xor_pc = bits_to_take(2,_size_history,pc);
-    int place_BMA =(_bool_isShare)?(_BTB.get_place_BMA(pc)^xor_pc):_BTB.get_place_BMA(pc);
+    int get_place =_BTB.get_place_BMA(pc);
+    int place_BMA =(_bool_isShare)?(get_place^xor_pc):get_place;
 
     machine_stats.br_num++;
 
@@ -352,11 +353,11 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 
 
     }
-    if (_BMA[(_bool_GlobalTable) ? 0 : new_tag].read_state_at(place_BMA)!=is_taken)
+    if (_BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA)!=is_taken)
     {
         machine_stats.flush_num++;
     }
-    _BMA[(_bool_GlobalTable) ? 0 : new_tag].update_state_at(place_BMA, is_taken);
+    _BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
 
 }
 
