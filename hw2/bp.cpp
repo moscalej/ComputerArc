@@ -2,21 +2,27 @@
 /* This file should hold your implementation of the predictor simulator */
 
 #include "bp_api.h"
-#include "math.h"
+#include <math.h>
 typedef enum {
 	SNT = 0, WNT, WT, ST
 } State;
+class BPbase {
+    BPbase();
+	virtual bool predict(uint32_t pc, uint32_t *dst)=0;
+	virtual void update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst)=0;
+	virtual void update_history(uint32_t pc, uint32_t targetPc, bool taken)=0;
+	virtual void GetStats(SIM_stats *curStats)=0;
 
-class BPBase {
+};
+class BPlocal: public BPbase {
 public:
-    void init(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist, bool isGlobalTable, bool isShare);
+    BPlocal(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isShare);
 	bool predict(uint32_t pc, uint32_t *dst);
 	void update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst);
 	void update_history(uint32_t pc, uint32_t targetPc, bool taken);
 	void GetStats(SIM_stats *curStats);
 private:
-	bool isGlobalHist_;
-	bool isGlobalTable_;
+
 	bool isShare_;
 	unsigned btbSize_;
 	unsigned historySize_;
@@ -26,9 +32,8 @@ private:
 	SIM_stats stats;
 };
 
-void BPBase::init(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist, bool isGlobalTable, bool isShare) {
-	isGlobalHist_ = isGlobalHist;
-    isGlobalTable_= isGlobalTable;
+ BPlocal::BPlocal(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isShare) {
+	
 	isShare_= isShare;
 	btbSize_= btbSize;
 	historySize_= historySize;
@@ -37,9 +42,9 @@ void BPBase::init(unsigned btbSize, unsigned historySize, unsigned tagSize, bool
 	stats.br_num = 0;
 	stats.flush_num = 0;
 	stats.size = btbSize*(tagSize + 30 + historySize + 2 * pow(2, historySize));
-	State BiModelPredictor[] = { 0 };
+	State BiModelPredictor[] = ;
 }
-bool BPBase::predict(uint32_t pc, uint32_t *dst) {
+bool BPlocal::predict(uint32_t pc, uint32_t *dst) {
 	unsigned btbEntry_ = (pc / 4) % (int)(pow(2, this->btbSize_));
 	unsigned tag_ = (pc / 4) % (int)pow(2, tagSize_);
 	unsigned shared_bits = (pc / 4) % (int)pow(2, historySize_);
@@ -72,7 +77,7 @@ bool BPBase::predict(uint32_t pc, uint32_t *dst) {
 		*dst += 4;
 		return false;
 }
-void BPBase::update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
+void BPlocal::update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
 	unsigned btbEntry_ = (pc / 4) % (int)pow(2, btbSize_);
 	unsigned tag_ = (pc / 4) % (int)pow(2, tagSize_);
 		if (taken)
@@ -115,7 +120,7 @@ void BPBase::update(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_ds
 	
 
 }
-void BPBase::update_history(uint32_t pc, uint32_t targetPc, bool taken) {
+void BPlocal::update_history(uint32_t pc, uint32_t targetPc, bool taken) {
 	unsigned btbEntry_ = (pc / 4) % (int)pow(2, btbSize_);
 	unsigned tag_ = (pc / 4) % (int)pow(2, tagSize_);
 	if (btb_[btbEntry_][0]==tag_)
@@ -134,15 +139,15 @@ void BPBase::update_history(uint32_t pc, uint32_t targetPc, bool taken) {
 		btb_[btbEntry_][1] = targetPc;
 	}
 }
-void BPBase::GetStats(SIM_stats * curStats)
+void BPlocal::GetStats(SIM_stats * curStats)
 {
 	curStats->br_num = this->stats.br_num;
 	curStats->flush_num = this->stats.flush_num;
 	curStats->size = this->stats.size;
 }
-BPBase BP;
+
 int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist, bool isGlobalTable, bool isShare){
-	BP.init(btbSize, historySize, tagSize, isGlobalHist, isGlobalTable, isShare);
+	
 	return -1;
 }
 
