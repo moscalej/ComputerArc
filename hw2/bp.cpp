@@ -248,6 +248,7 @@ void LocalBranchPredictor::update_prediction(int pc_tag, STATES last_prediction_
     this->BTB.update_tag_adrress(temp_address,last_branch_jump);
 
 }
+
 void LocalBranchPredictor::init_LBP(int size_CH, int size_BHR, int size_BTB) {
     CH.init_CH(size_CH, size_BHR, 0, 0);
     BTB.init_BTB(size_BTB);
