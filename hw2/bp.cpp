@@ -173,7 +173,6 @@ int CacheHistory::tag_from_BHR(int address) {
 void CacheHistory::add_last_prediction_to_address(int address, STATES last_predicion) {
     this->BHR[address].update_lsb(last_predicion);
 }
-
 void CacheHistory::init_CH(int size_CH, int size_BHR) {
     this->_size=size_CH;
     for (int i = 0; i <_size ; ++i) {
@@ -187,7 +186,7 @@ class LocalBranchPredictor{
 
 public:
     void init_LBP(int size_CH, int size_BHR, int size_BTB);
-    int pc_destination_from_tag(int tag);
+    int pc_destination_from_tag(int tag_pc);
     void update_prediction(int pc_tag, STATES last_prediction_state, int last_branch_jump);
 
 
@@ -202,8 +201,8 @@ private:
 
 };
 
-int LocalBranchPredictor::pc_destination_from_tag(int tag) {
-    return this->BTB.adress_predicted_from_tag(this->CH.tag_from_BHR(tag));
+int LocalBranchPredictor::pc_destination_from_tag(int tag_pc) {
+    return this->BTB.adress_predicted_from_tag(this->CH.tag_from_BHR(tag_pc));
 }
 void LocalBranchPredictor::update_prediction(int pc_tag, STATES last_prediction_state, int last_branch_jump) {
     int temp_address;
@@ -213,7 +212,6 @@ void LocalBranchPredictor::update_prediction(int pc_tag, STATES last_prediction_
     this->BTB.update_tag_adrress(temp_address,last_branch_jump);
 
 }
-
 void LocalBranchPredictor::init_LBP(int size_CH, int size_BHR, int size_BTB) {
     CH.init_CH(size_CH,size_BHR);
     BTB.init_BTB(size_BTB);
@@ -239,13 +237,11 @@ private:
 int GlobalBranchPredictor::predic_address_from_ip_tag() {
     return BTB.adress_predicted_from_tag(BHR.get_address());
 }
-
 void GlobalBranchPredictor::update_history(STATES branch_answer, int branch_address) {
     this->BTB.update_tag_adrress(BHR.get_address(),branch_address);
     this->BTB.update_state_at(BHR.get_address(), branch_answer);
     this->BHR.update_lsb(branch_answer);
 }
-
 void GlobalBranchPredictor::ini_GBP(int size_BHR, int size_BTB) {
     BTB.init_BTB(size_BTB);
     BHR.init_BHR(size_BHR);
@@ -257,20 +253,53 @@ void GlobalBranchPredictor::ini_GBP(int size_BHR, int size_BTB) {
 
 class BranchPredictorUnit{
 public:
+    void ini_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize,
+                 bool isGlobalHist, bool isGlobalTable, bool isShare);
+
+    bool predict_BPU(uint32_t pc, uint32_t &dst);
+
+    void update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst){
+        return;
+    }
+
+    void GetStats_BP(SIM_stats *curStats) {
+        return;
+    }
+
 protected:
 
     LocalBranchPredictor LBP;
     GlobalBranchPredictor GBP;
+    unsigned int _size_BTB;
+    unsigned int _size_BHR;
+    unsigned int _size_CH;
+    bool _bool_GlobalHist;
+    bool _bool_GlobalTable;
+    bool _bool_isShare;
 };
 
+void BranchPredictorUnit::ini_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist,
+                                  bool isGlobalTable, bool isShare) {
+    this->_size_BTB = btbSize;
+    this->_size_BHR = historySize;
+    this->_size_CH = tagSize;
+    this->_bool_GlobalHist = isGlobalHist;
+    this->_bool_GlobalTable =isGlobalTable;
+    this->_bool_isShare = isShare;
+    this->GBP.ini_GBP(_size_BHR,_size_BTB);
+    this->LBP.init_LBP(_size_CH,_size_BHR,_size_BTB);
 
+}
 
-
-
-
-
-
-
+bool BranchPredictorUnit::predict_BPU(uint32_t pc, uint32_t &dst) {
+    int pc_short = bits_to_take(2,_size_CH,pc);
+    if(_bool_GlobalHist){
+        dst = (uint32_t)GBP.predic_address_from_ip_tag();
+        return true;
+    }else if(_bool_GlobalTable){
+        dst = (uint32_t)LBP.pc_destination_from_tag(pc_short);
+    }
+}
 
 
 int BP_init(unsigned btbSize, unsigned historySize, unsigned tagSize,
