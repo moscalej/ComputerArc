@@ -467,39 +467,36 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
     bool same_tag = BTB.is_same_tag(pc);
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
-	//this will reset the conted of the BMA
-    if (!same_tag) {
-        if (_bool_GlobalTable) {
-            BMA[0].reset(place_BMA);
-        } else {
-            BMA[short_pc].init_BMA((int)pow(2, _size_history));
-        }
-    }
-
-	//this will clean the BHR in the short position and set the new
+    //This part is the Pre-upgrade
     if(!same_tag){
-        BTB.flush(short_pc);
+        this->BTB.flush(short_pc);
+
+        if (_bool_GlobalTable) {
+            this->BMA[0].reset(place_BMA);
+        } else {
+            this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
+        }
         get_place=0;
     }
+    //this part is the readings for the mschine stats and does not update nothing
     place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
-	if (_bool_GlobalHist) {
-		this->BTB.update_global(is_taken, pc, targetPc);
-	}
+    if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )
+        || (taken && pred_dst != targetPc)) {
+        this->machine_stats.flush_num++;
+    }
+    this->machine_stats.br_num++;
+
+
+    //this part is the update part of the method and will update the BTB and the BMA
+    if (_bool_GlobalHist) {
+        this->BTB.update_global(is_taken, pc, targetPc);
+    }
 	else {
-		BTB.update_at_pc(pc, is_taken, targetPc);
-	}
-
-
-	machine_stats.br_num++;
-
-	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
-		machine_stats.flush_num++;
-	}
+        this->BTB.update_at_pc(pc, is_taken, targetPc);
+    }
 
 	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
-
-
 
 }
 
