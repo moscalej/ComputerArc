@@ -276,8 +276,8 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
 		this->BHR[short_pc].flush();
 		this->_tag[short_pc] = new_tag;
 	}
-	this->_target[short_pc] = target_address;
 	this->BHR[short_pc].update_lsb(last_prediction);
+	this->_target[short_pc] = target_address;
 	return;
 
 }
@@ -455,27 +455,27 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	if (BTB.get_address_from_pc(short_pc) == -1) {
 		if (_bool_GlobalTable)
 		{
-			BMA[0].init_BMA((int)pow(2, _size_history));
+			BMA[0].reset(place_BMA);
 		}
 		else
 			BMA[short_pc].init_BMA((int)pow(2, _size_history));
 	}
+	
 
 	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
 		machine_stats.flush_num++;
 	}
 
-
+	
 	if (_bool_GlobalHist) {
 		this->BTB.update_global(is_taken, pc, targetPc);
 	}
 	else {
 		BTB.update_at_pc(pc, is_taken, targetPc);
 	}
-
-
 	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
 
+	
 }
 
 void BranchPredictorUnit::GetStats_BP(SIM_stats &curStats) {
