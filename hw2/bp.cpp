@@ -5,9 +5,9 @@
 #include <cmath>
 #include <iostream>
 
-#define MAX_BI_MODAL 256
-#define MAX_TAG_ITEMS 32
-#define MAX_HISTORY_BITS 8
+#define MAX_BI_MODAL 4
+#define MAX_TAG_ITEMS 2
+#define MAX_HISTORY_BITS 2
 #define LSB_MACRO 2
 
 enum STATES {
@@ -417,6 +417,7 @@ bool BranchPredictorUnit::predict_BPU(uint32_t pc, uint32_t &dst) {
 		dst = pc + 4;
 		return false;
 	}
+
 	STATES result = get_BMA_answer(pc, index_BMA);
 	dst = (uint32_t)(result == TAKEN) ? ((uint32_t)temp) : (pc + 4);
 
@@ -459,6 +460,12 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 		else
 			BMA[short_pc].init_BMA((int)pow(2, _size_history));
 	}
+
+	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
+		machine_stats.flush_num++;
+	}
+
+	///////
 	if (_bool_GlobalHist) {
 		this->BTB.update_global(is_taken, pc, targetPc);
 	}
