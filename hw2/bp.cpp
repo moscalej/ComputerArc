@@ -460,10 +460,10 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	if (BTB.get_address_from_pc(short_pc) == -1) {
 		if (_bool_GlobalTable)
 		{
-			BMA[short_pc].init_BMA((int)pow(2, _size_history));
+			BMA[0].init_BMA((int)pow(2, _size_history));
 		}
 		else
-			BMA[0].init_BMA((int)pow(2, _size_history));
+			BMA[short_pc].init_BMA((int)pow(2, _size_history));
 	}
 	if (_bool_GlobalHist) {
 		this->BTB.update_global(is_taken, pc, targetPc);
