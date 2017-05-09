@@ -451,12 +451,6 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	STATES is_taken = (taken) ? TAKEN : NOTTAKEN;
 
 	machine_stats.br_num++;
-	
-	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
-		machine_stats.flush_num++;
-	}
-
-	///////
 	if (BTB.get_address_from_pc(short_pc) == -1) {
 		if (_bool_GlobalTable)
 		{
@@ -468,6 +462,12 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	if (_bool_GlobalHist) {
 		this->BTB.update_global(is_taken, pc, targetPc);
 	}
+	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
+		machine_stats.flush_num++;
+	}
+
+	///////
+	
 	else {
 		BTB.update_at_pc(pc, is_taken, targetPc);
 	}
