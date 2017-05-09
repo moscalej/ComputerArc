@@ -5,9 +5,9 @@
 #include <cmath>
 #include <iostream>
 
-#define MAX_BI_MODAL 4
-#define MAX_TAG_ITEMS 2
-#define MAX_HISTORY_BITS 2
+#define MAX_BI_MODAL 256
+#define MAX_TAG_ITEMS 32
+#define MAX_HISTORY_BITS 8
 #define LSB_MACRO 2
 
 enum STATES {
@@ -277,8 +277,9 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
 	int new_tag = bits_to_take(LSB_MACRO, this->_tag_size, pc);
 
     this->_tag[short_pc] = new_tag;
+	this->_target[short_pc] = target_address;
     this->BHR[short_pc].update_lsb(last_prediction);
-    this->_target[short_pc] = target_address;
+    
 
 	return;
 
@@ -465,29 +466,29 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	int get_place = BTB.get_place_BMA(pc);
     STATES is_taken = (taken) ? TAKEN : NOTTAKEN;
     bool same_tag = BTB.is_same_tag(pc);
-    if(!same_tag){
-        BTB.flush(short_pc);
-        get_place=0;
-    }
+    int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
-    
-
-
-    if (!same_tag) {
+    if (!same_tag ) {
         if (_bool_GlobalTable) {
             BMA[0].reset(place_BMA);
         } else {
             BMA[short_pc].init_BMA((int)pow(2, _size_history));
         }
     }
-	int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
+
+    if(!same_tag ){
+        BTB.flush(short_pc);
+        get_place=0;
+    }
+    place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
+
     machine_stats.br_num++;
 
     if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
         machine_stats.flush_num++;
     }
 
-    BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
+ 
 
     if (_bool_GlobalHist) {
         this->BTB.update_global(is_taken, pc, targetPc);
@@ -496,7 +497,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
         BTB.update_at_pc(pc, is_taken, targetPc);
     }
 
-
+	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
 }
 
 void BranchPredictorUnit::GetStats_BP(SIM_stats &curStats) {
