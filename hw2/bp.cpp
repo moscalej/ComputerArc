@@ -271,8 +271,8 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
     if (new_tag != _tag[short_pc]) {
         this->BHR[short_pc].flush();
         this->_tag[short_pc] = new_tag;
-        this->_target[short_pc] = target_address;
     }
+    this->_target[short_pc] = target_address;
     this->BHR[short_pc].update_lsb(last_prediction);
     return;
 
