@@ -312,7 +312,7 @@ bool BranchPredictorUnit::predict_BPU(uint32_t pc, uint32_t &dst) {
     int index_BMA = get_BMA_index(pc);
     STATES result =get_BMA_awnser(pc,index_BMA);
     dst =(uint32_t)(result == TAKEN)?(uint32_t)temp:(pc +4);
-
+	 
 
     return result == TAKEN;
 
@@ -325,7 +325,7 @@ int BranchPredictorUnit::get_target(int pc) {
 }
 
 int BranchPredictorUnit::get_BMA_index(int pc) {
-    this->_BTB.get_place_BMA(pc);
+	return  this->_BTB.get_place_BMA(pc);
 
 }
 
