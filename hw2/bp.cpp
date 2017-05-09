@@ -240,6 +240,10 @@ public:
 	*/
 	void update_global(STATES branch_answer, int pc, int target_address);
 
+    bool is_same_tag(uint32_t pc);
+
+    void flush(int short_pc);
+
 private:
 	int _size;
 	int _pc_size;
@@ -272,12 +276,10 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
 	int short_pc = bits_to_take(LSB_MACRO, this->_pc_size, pc);
 	int new_tag = bits_to_take(LSB_MACRO, this->_tag_size, pc);
 
-	if (new_tag != _tag[short_pc]) {
-		this->BHR[short_pc].flush();
-		this->_tag[short_pc] = new_tag;
-	}
-	this->_target[short_pc] = target_address;
-	this->BHR[short_pc].update_lsb(last_prediction);
+    this->_tag[short_pc] = new_tag;
+    this->BHR[short_pc].update_lsb(last_prediction);
+    this->_target[short_pc] = target_address;
+
 	return;
 
 }
@@ -296,6 +298,19 @@ void BranchTargetBuffer::update_global(STATES branch_answer, int pc, int target_
 	}
 	this->_target[short_pc] = target_address;
 	this->_tag[short_pc] = new_tag;
+}
+
+bool BranchTargetBuffer::is_same_tag(uint32_t pc) {
+
+    int short_pc = bits_to_take(LSB_MACRO, this->_pc_size, pc);
+    int new_tap = bits_to_take(LSB_MACRO, this->_tag_size, pc);
+    return (new_tap == _tag[short_pc]);
+
+}
+
+void BranchTargetBuffer::flush(int short_pc) {
+    this->BHR[short_pc].flush();
+
 }
 
 
@@ -448,33 +463,39 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	int xor_pc = bits_to_take(LSB_MACRO, _size_history, pc);
 	int new_tag = bits_to_take(LSB_MACRO, this->_size_tag, pc);
 	int get_place = BTB.get_place_BMA(pc);
-	int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
-	STATES is_taken = (taken) ? TAKEN : NOTTAKEN;
+    STATES is_taken = (taken) ? TAKEN : NOTTAKEN;
+    bool same_tag = BTB.is_same_tag(pc);
+    if(!same_tag){
+        BTB.flush(short_pc);
+        get_place=0;
+    }
 
-	machine_stats.br_num++;
-	if (BTB.get_address_from_pc(short_pc) == -1) {
-		if (_bool_GlobalTable)
-		{
-			BMA[0].init_BMA((int)pow(2, _size_history));
-		}
-		else
-			BMA[short_pc].init_BMA((int)pow(2, _size_history));
-	}
-
-	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
-		machine_stats.flush_num++;
-	}
+    int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
 
-	if (_bool_GlobalHist) {
-		this->BTB.update_global(is_taken, pc, targetPc);
-	}
-	else {
-		BTB.update_at_pc(pc, is_taken, targetPc);
-	}
+    if (!same_tag) {
+        if (_bool_GlobalTable) {
+            BMA[0].reset(place_BMA);
+        } else {
+            BMA[short_pc].init_BMA((int)pow(2, _size_history));
+        }
+    }
 
+    machine_stats.br_num++;
 
-	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
+    if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
+        machine_stats.flush_num++;
+    }
+
+    BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
+
+    if (_bool_GlobalHist) {
+        this->BTB.update_global(is_taken, pc, targetPc);
+    }
+    else {
+        BTB.update_at_pc(pc, is_taken, targetPc);
+    }
+
 
 }
 
