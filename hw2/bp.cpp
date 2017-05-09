@@ -5,9 +5,9 @@
 #include <cmath>
 #include <iostream>
 
-#define MAX_BI_MODAL 4
-#define MAX_TAG_ITEMS 2
-#define MAX_HISTORY_BITS 2
+#define MAX_BI_MODAL 256
+#define MAX_TAG_ITEMS 32
+#define MAX_HISTORY_BITS 8
 #define LSB_MACRO 2
 
 enum STATES {
@@ -465,13 +465,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	int get_place = BTB.get_place_BMA(pc);
     STATES is_taken = (taken) ? TAKEN : NOTTAKEN;
     bool same_tag = BTB.is_same_tag(pc);
-    if(!same_tag){
-        BTB.flush(short_pc);
-        get_place=0;
-    }
-
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
-
 
     if (!same_tag) {
         if (_bool_GlobalTable) {
@@ -480,6 +474,14 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
             BMA[short_pc].init_BMA((int)pow(2, _size_history));
         }
     }
+
+    if(!same_tag){
+        BTB.flush(short_pc);
+        get_place=0;
+    }
+    place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
+
+
 
     machine_stats.br_num++;
 
