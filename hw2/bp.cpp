@@ -467,6 +467,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
     bool same_tag = BTB.is_same_tag(pc);
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
+	//this will reset the conted of the BMA
     if (!same_tag) {
         if (_bool_GlobalTable) {
             BMA[0].reset(place_BMA);
@@ -475,28 +476,29 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
         }
     }
 
+	//this will clean the BHR in the short position and set the new
     if(!same_tag){
         BTB.flush(short_pc);
         get_place=0;
     }
     place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
+	if (_bool_GlobalHist) {
+		this->BTB.update_global(is_taken, pc, targetPc);
+	}
+	else {
+		BTB.update_at_pc(pc, is_taken, targetPc);
+	}
 
 
-    machine_stats.br_num++;
+	machine_stats.br_num++;
 
-    if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
-        machine_stats.flush_num++;
-    }
+	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
+		machine_stats.flush_num++;
+	}
 
-    BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
+	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
 
-    if (_bool_GlobalHist) {
-        this->BTB.update_global(is_taken, pc, targetPc);
-    }
-    else {
-        BTB.update_at_pc(pc, is_taken, targetPc);
-    }
 
 
 }
