@@ -470,7 +470,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
         get_place=0;
     }
 
-    int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
+    
 
 
     if (!same_tag) {
@@ -480,7 +480,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
             BMA[short_pc].init_BMA((int)pow(2, _size_history));
         }
     }
-
+	int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
     machine_stats.br_num++;
 
     if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
