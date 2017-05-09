@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
 	SIM_stats stats;
 	BP_GetStats(&stats);
 	printf("flush_num: %d, br_num: %d, size: %db\n", stats.flush_num, stats.br_num, stats.size);
-
+	//somthing
 	return 0;
 }
 
