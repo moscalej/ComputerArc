@@ -6,7 +6,7 @@
 #include <iostream>
 
 #define MAX_BI_MODAL 256
-#define MAX_TAG_ITEMS 30
+#define MAX_TAG_ITEMS 32
 #define MAX_HISTORY_BITS 8
 #define LSB_MACRO 2
 
@@ -155,7 +155,7 @@ void BranchHistoryRegister::flush() {
 class BiModalArray {
 public:
 	void init_BMA(int size);
-
+	void reset(int index);
 	void update_state_at(int address, STATES branch_answer);
 
 	STATES read_state_at(int address);
@@ -164,7 +164,9 @@ private:
 	int _size;
 	T_B_Counter state_machine[MAX_BI_MODAL];
 };
-
+void BiModalArray::reset(int i) {
+	state_machine[i].reset();
+}
 void BiModalArray::init_BMA(int size) {
 	this->_size = size;
 	for (int i = 0; i < _size; ++i) {
@@ -216,6 +218,7 @@ public:
 	* @return address on the Bi Modal Array
 	*/
 	int get_place_BMA(int pc);
+
 
 	/**
 	* This method will update an expesific row(given by the Pc) of the TBT
@@ -442,15 +445,25 @@ STATES BranchPredictorUnit::get_BMA_answer(int pc, int BMA_target) {
 void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
 	int short_pc = bits_to_take(LSB_MACRO, _size_pc, pc);
 	int xor_pc = bits_to_take(LSB_MACRO, _size_history, pc);
-
+	int new_tag = bits_to_take(LSB_MACRO, this->_size_tag, pc);
 	int get_place = BTB.get_place_BMA(pc);
 	int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 	STATES is_taken = (taken) ? TAKEN : NOTTAKEN;
 
 	machine_stats.br_num++;
+	
 	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
 		machine_stats.flush_num++;
 	}
+	if (BTB.get_address_from_pc(short_pc) == -1) {
+		if (_bool_GlobalTable)
+		{
+			BMA[short_pc].init_BMA((int)pow(2, _size_history));
+		}
+		else
+			BMA[0].reset(place_BMA);
+	}
+	///////
 
 	if (_bool_GlobalHist) {
 		this->BTB.update_global(is_taken, pc, targetPc);
