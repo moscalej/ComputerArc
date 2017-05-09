@@ -4,10 +4,10 @@
 #include "bp_api.h"
 #include <cmath>
 #include <iostream>
-//some coments
+
 #define MAX_BI_MODAL 256
-#define MAX_TAG_ITEMS 100
-#define MAX_HISTORY_BITS 32
+#define MAX_TAG_ITEMS 30
+#define MAX_HISTORY_BITS 8
 #define LSB_MACRO 2
 
 enum STATES {
@@ -272,9 +272,9 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
         this->BHR[short_pc].flush();
         this->_tag[short_pc] = new_tag;
         this->_target[short_pc] = target_address;
-        return;
     }
     this->BHR[short_pc].update_lsb(last_prediction);
+    return;
 
 }
 
