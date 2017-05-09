@@ -385,7 +385,7 @@ void BranchPredictorUnit::init_BPU(unsigned btbSize, unsigned historySize, unsig
 	this->_bool_isShare = isShare;
 
 	this->BTB.init_BTB(btbSize, historySize, tagSize);
-	for (int i = 0; i < _size_BTB; ++i) {
+	for (int i = 0; i < (int)_size_BTB; ++i) {
 		BMA[i].init_BMA((int)pow(2, (double)historySize));
 	}
 
@@ -448,7 +448,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	STATES is_taken = (taken) ? TAKEN : NOTTAKEN;
 
 	machine_stats.br_num++;
-	if (BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken || (taken==true) && pred_dst != targetPc) {
+	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )|| (taken && pred_dst != targetPc)) {
 		machine_stats.flush_num++;
 	}
 
