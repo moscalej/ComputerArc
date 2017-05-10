@@ -276,9 +276,11 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
 	int short_pc = bits_to_take(LSB_MACRO, this->_pc_size, pc);
 	int new_tag = bits_to_take(LSB_MACRO, this->_tag_size, pc);
 
+    if(last_prediction ==TAKEN || new_tag != _tag[short_pc]) {
+        this->_target[short_pc] = target_address;
+    }
     this->_tag[short_pc] = new_tag;
     this->BHR[short_pc].update_lsb(last_prediction);
-    this->_target[short_pc] = target_address;
 
 	return;
 
