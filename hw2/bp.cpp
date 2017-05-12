@@ -463,12 +463,15 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	int xor_pc = bits_to_take(LSB_MACRO, _size_history, pc);
 	int new_tag = bits_to_take(LSB_MACRO, this->_size_tag, pc);
 	int get_place = BTB.get_place_BMA(pc);
-    STATES is_taken = (taken) ? TAKEN : NOTTAKEN;
+    STATES is_taken_exe = (taken) ? TAKEN : NOTTAKEN;
     bool same_tag = BTB.is_same_tag(pc);
+
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
+    STATES BMA_prediciotn = this->BMA->read_state_at(place_BMA);
 
     //This part is the Pre-upgrade
-    if(!same_tag){
+        // in the pre upgrade i want to check if the
+    if(!same_tag || (is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst)){
         this->BTB.flush(short_pc);
 
         if (_bool_GlobalTable) {
@@ -481,7 +484,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
     //this part is the readings for the mschine stats and does not update nothing
     place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
-    if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken )
+    if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken_exe )
         || (taken && pred_dst != targetPc)) {
         this->machine_stats.flush_num++;
     }
@@ -490,13 +493,13 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 
     //this part is the update part of the method and will update the BTB and the BMA
     if (_bool_GlobalHist) {
-        this->BTB.update_global(is_taken, pc, targetPc);
+        this->BTB.update_global(is_taken_exe, pc, targetPc);
     }
 	else {
-        this->BTB.update_at_pc(pc, is_taken, targetPc);
+        this->BTB.update_at_pc(pc, is_taken_exe, targetPc);
     }
 
-	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken);
+	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken_exe);
 
 }
 
