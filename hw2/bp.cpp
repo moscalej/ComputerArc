@@ -5,9 +5,9 @@
 #include <cmath>
 #include <iostream>
 
-#define MAX_BI_MODAL 2
-#define MAX_BTB_ROW 4
-#define MAX_HISTORY_BITS 1
+#define MAX_BI_MODAL 255
+#define MAX_BTB_ROW 30
+#define MAX_HISTORY_BITS 8
 #define LSB_MACRO 2
 
 enum STATES {
@@ -497,7 +497,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
     bool same_tag = BTB.is_same_tag(pc);
 
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
-    STATES BMA_prediciotn = this->BMA->read_state_at(place_BMA);
+    STATES BMA_prediciotn = this->BMA[short_pc].read_state_at(place_BMA);
     bool good_prediction_diferrent_dest =((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst));
     //This part is the Pre-upgrade
 //         in the pre upgrade i want to check if is the same tag or has a diferent tag
@@ -505,18 +505,18 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 //         in case of same tag we will it will check if we made the write prediction
 //         and the desteny was diferent in this case we will also flush  and reset the state machines
 
-    if(!same_tag ||(good_prediction_diferrent_dest && taken) ){
+    if(!same_tag  ){
         this->BTB.flush(short_pc);
+        get_place=0;
+        place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
         if (_bool_GlobalTable) {
-            this->BMA[0].reset(place_BMA);
+               this->BMA[0].reset(place_BMA);
         } else {
             this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
         }
-        get_place=0;
     }
     //re sets the place  just in case we change it for the read
-    place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
     //this part is the readings for the mschine stats and does not update nothing
 
