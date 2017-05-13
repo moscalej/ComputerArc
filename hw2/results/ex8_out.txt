@@ -1,4 +1,3 @@
-C:\Users\amoscoso\Documents\Technion\ComputerArc\hw2\cmake-build-debug\Hw2exe.exe .\tests\ex8_in.txt
 0x11e4 N 0x11e8
 0x2396 N 0x239a
 0x2470 N 0x2474
