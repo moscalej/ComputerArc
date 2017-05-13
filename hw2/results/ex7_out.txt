@@ -1,3 +1,5 @@
+C:\Users\amoscoso\Documents\Technion\ComputerArc\hw2\cmake-build-debug\Hw2exe.exe .\tests\ex7_in.txt
+C:\Users\amoscoso\Documents\Technion\ComputerArc\hw2\cmake-build-debug\Hw2exe.exe .\tests\ex7_in.txt
 0x1e88 N 0x1e8c
 0x982 N 0x986
 0x62a N 0x62e

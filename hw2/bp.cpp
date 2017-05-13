@@ -5,9 +5,9 @@
 #include <cmath>
 #include <iostream>
 
-#define MAX_BI_MODAL 256
-#define MAX_TAG_ITEMS 32
-#define MAX_HISTORY_BITS 8
+#define MAX_BI_MODAL 2
+#define MAX_BTB_ROW 4
+#define MAX_HISTORY_BITS 1
 #define LSB_MACRO 2
 
 enum STATES {
@@ -116,6 +116,14 @@ public:
 	int get_address();
 
 	void flush();
+
+	std::string to_print(){
+		std::string temp;
+		for (int i = 0; i < _size; ++i) {
+			temp.append((this->_BHR[i]==TAKEN)?"T":"N");
+		}
+		return temp;
+	}
 
 private:
 	int _size;
@@ -244,13 +252,22 @@ public:
 
     void flush(int short_pc);
 
+    void force_upgrade(uint32_t pc, uint32_t target_address);
+
+	void print(){
+		std::cout<<"BTB to be print"<<std::endl;
+		for (int i = 0; i < _size; ++i) {
+			std::cout<<i<<". T: "<<_tag[i]<< " A: "<<_target[i]<<" H: "<<BHR[i].to_print()<<std::endl;
+		}
+	}
+
 private:
 	int _size;
 	int _pc_size;
 	int _tag_size;
-	int _tag[MAX_TAG_ITEMS];
-	int _target[MAX_TAG_ITEMS];
-	BranchHistoryRegister BHR[MAX_TAG_ITEMS];
+	int _tag[MAX_BTB_ROW];
+	int _target[MAX_BTB_ROW];
+	BranchHistoryRegister BHR[MAX_BTB_ROW];
 };
 
 void BranchTargetBuffer::init_BTB(int size_BTB, int size_BHR, int tag_size) {
@@ -315,6 +332,12 @@ void BranchTargetBuffer::flush(int short_pc) {
 
 }
 
+void BranchTargetBuffer::force_upgrade(uint32_t pc, uint32_t target_address) {
+    int short_pc = bits_to_take(LSB_MACRO, this->_pc_size, pc);
+    this->_target[short_pc] = target_address;
+
+}
+
 
 class BranchPredictorUnit {
 public:
@@ -350,6 +373,10 @@ public:
 	void update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst);
 
 	void GetStats_BP(SIM_stats &curStats);
+	void print_debug(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst){
+		std::cout<<"the imput was pc: "<<pc<<" did it branch: "<<((taken)?"YES":"NO")<<" destination after theb: "<<targetPc<<std::endl;
+		BTB.print();
+	}
 
 
 protected:
@@ -390,7 +417,7 @@ protected:
 	bool _bool_GlobalTable;
 	bool _bool_isShare;
 	BranchTargetBuffer BTB;
-	BiModalArray BMA[MAX_TAG_ITEMS];
+	BiModalArray BMA[MAX_BTB_ROW];
 };
 
 void BranchPredictorUnit::init_BPU(unsigned btbSize, unsigned historySize, unsigned tagSize, bool isGlobalHist,
@@ -465,15 +492,20 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	int xor_pc = bits_to_take(LSB_MACRO, _size_history, pc);
 	int new_tag = bits_to_take(LSB_MACRO, this->_size_tag, pc);
 	int get_place = BTB.get_place_BMA(pc);
+
     STATES is_taken_exe = (taken) ? TAKEN : NOTTAKEN;
     bool same_tag = BTB.is_same_tag(pc);
 
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
     STATES BMA_prediciotn = this->BMA->read_state_at(place_BMA);
-
+    bool good_prediction_diferrent_dest =((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst));
     //This part is the Pre-upgrade
-        // in the pre upgrade i want to check if the
-    if(!same_tag || ((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst))){
+//         in the pre upgrade i want to check if is the same tag or has a diferent tag
+//        in case of a diferrent tag we will flush and update the state machines
+//         in case of same tag we will it will check if we made the write prediction
+//         and the desteny was diferent in this case we will also flush  and reset the state machines
+
+    if(!same_tag ||(good_prediction_diferrent_dest && taken) ){
         this->BTB.flush(short_pc);
 
         if (_bool_GlobalTable) {
@@ -483,8 +515,10 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
         }
         get_place=0;
     }
-    //this part is the readings for the mschine stats and does not update nothing
+    //re sets the place  just in case we change it for the read
     place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
+
+    //this part is the readings for the mschine stats and does not update nothing
 
     if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken_exe )
         || (taken && pred_dst != targetPc)) {
@@ -494,14 +528,18 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 
 
     //this part is the update part of the method and will update the BTB and the BMA
-    if (_bool_GlobalHist) {
-        this->BTB.update_global(is_taken_exe, pc, targetPc);
-    }
-	else {
-        this->BTB.update_at_pc(pc, is_taken_exe, targetPc);
-    }
-
 	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken_exe);
+
+	if (_bool_GlobalHist) {
+		this->BTB.update_global(is_taken_exe, pc, targetPc);
+	}
+	else {
+		this->BTB.update_at_pc(pc, is_taken_exe, targetPc);
+		if (good_prediction_diferrent_dest) this->BTB.force_upgrade(pc,targetPc );
+	}
+
+	//debug level
+	//print_debug(pc,targetPc,taken,pred_dst);
 
 }
 
