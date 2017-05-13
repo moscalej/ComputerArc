@@ -473,7 +473,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 
     //This part is the Pre-upgrade
         // in the pre upgrade i want to check if the
-    if(!same_tag || (is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst)){
+    if(!same_tag || ((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst))){
         this->BTB.flush(short_pc);
 
         if (_bool_GlobalTable) {
