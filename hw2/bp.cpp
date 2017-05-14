@@ -493,14 +493,14 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	//TODO: FINISH THE DEBUG ON LOCAL AND DO A DEBUG ON GLOBAL WE ARE CLOSE I THINK :D   :I   :(   :'(
 	int short_pc = bits_to_take(LSB_MACRO, _size_pc, pc);
 	int xor_pc = bits_to_take(LSB_MACRO, _size_history, pc);
-	int new_tag = bits_to_take(LSB_MACRO, this->_size_tag, pc);
+	//int new_tag = bits_to_take(LSB_MACRO, this->_size_tag, pc);
 	int get_place = BTB.get_place_BMA(pc);
 
     STATES is_taken_exe = (taken) ? TAKEN : NOTTAKEN;
     bool same_tag = BTB.is_same_tag(pc);
 
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
-    STATES BMA_prediciotn = this->BMA[short_pc].read_state_at(place_BMA);
+   // STATES BMA_prediciotn = this->BMA[short_pc].read_state_at(place_BMA);
     //TODO THIS IS DEBUG DONT KNOW IF WE NEED THE NEXT CHECK FOR RESET
 	//bool good_prediction_diferrent_dest =((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst));
 	//good_prediction_diferrent_dest= false;
@@ -533,6 +533,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 				this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
 			
 		}
+		
 
 	}
 	
