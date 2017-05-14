@@ -488,6 +488,8 @@ STATES BranchPredictorUnit::get_BMA_answer(int pc, int BMA_target) {
 }
 
 void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst) {
+
+	//TODO: FINISH THE DEBUG ON LOCAL AND DO A DEBUG ON GLOBAL WE ARE CLOSE I THINK :D   :I   :(   :'(
 	int short_pc = bits_to_take(LSB_MACRO, _size_pc, pc);
 	int xor_pc = bits_to_take(LSB_MACRO, _size_history, pc);
 	int new_tag = bits_to_take(LSB_MACRO, this->_size_tag, pc);
@@ -498,34 +500,34 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
     STATES BMA_prediciotn = this->BMA[short_pc].read_state_at(place_BMA);
-    bool good_prediction_diferrent_dest =((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst));
-    //debug
-    good_prediction_diferrent_dest= false;
+    //TODO THIS IS DEBUG DONT KNOW IF WE NEED THE NEXT CHECK FOR RESET
+	bool good_prediction_diferrent_dest =((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst));
+	good_prediction_diferrent_dest= false;
 
-    //This part is the Pre-upgrade
-//         in the pre upgrade i want to check if is the same tag or has a diferent tag
-//        in case of a diferrent tag we will flush and update the state machines (only at the new address(history lst bit) 0 or 0 xor pc..)
-//         in case of same tag we will it will check if we made the write prediction (dont know if we need to do this?)
-//         and the desteny was diferent in this case we will also flush  and reset the state machines
+//---This part is the Pre-upgrade
+//         in the pre upgrade we want to check if is the same tag or if has a different tag
+//        in case of a different tag we will flush and update the state machines (only at the new address(history lst bit) 0 or (0 xor pc..))
+//         in case of same tag we will it will check if we made the write prediction (I SET IT UP TO FALSE NEED TO CHECK THIS)
+//         and the destine was different in this case we will also flush  and reset the state machines
 
     if(!same_tag  ){
         this->BTB.flush(short_pc || (good_prediction_diferrent_dest && taken));
         get_place=0;
-        place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
+		//re sets the place  just in case we change it for the read
+		place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
-        if (_bool_GlobalTable) {
-               this->BMA[0].reset(place_BMA);
-        } else {
-            this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
-        }
-    }
-    //re sets the place  just in case we change it for the read
-
-    //this part is the readings for the mschine stats and does not update nothing
+		if (_bool_GlobalTable) {
+			this->BMA[0].reset(place_BMA);
+		} else {
+			this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
+		}
+	}
 
 
 
-    if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken_exe )
+
+	//this part is the readings for the machine stats and does not update nothing on the btb or bma
+	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken_exe )
         || (taken && pred_dst != targetPc)) {
         this->machine_stats.flush_num++;
     }
@@ -534,12 +536,14 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 
     //this part is the update part of the method and will update the BTB and the BMA
     //For the BMA we will update the last address read from the tag, this means that the
-    //             next time we found that sequence our state machine will have a different bios based on this update
-//                 TODO IMPORTANT TO TAKE IN TO ACOUNT THAT IF THE ANWSER WAS NOT TAKEN THE STATE MACHINE WILL GO TO SNT
-    //For the BTB we will update the result from the execute on the last bit of an expesific address
-//                    also add the new tag always (maYbE here the error
+    //             next time we found that sequence(before the update) our state machine will have a different bios based
+	// 				on this update
+	//                 TODO IMPORTANT TO TAKE IN TO ACOUNT THAT IF THE ANWSER WAS NOT TAKEN THE STATE MACHINE WILL GO TO SNT
 	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken_exe);
 
+
+	//For the BTB we will update the result from the execute on the last bit of an address history ( 0 0 0 )->taken->(0 0 1)
+	//                  also add the new tag always (maYbE here the error
 	if (_bool_GlobalHist) {
 		this->BTB.update_global(is_taken_exe, pc, targetPc);
 	}
@@ -548,7 +552,8 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 		if (!same_tag || good_prediction_diferrent_dest) this->BTB.force_upgrade(pc,targetPc ); //this force a new adress
 	}
 
-	//debug level
+	//debug level this method will print the full table BTB with the updates on the history
+	// IMPORTANT: THIS DOES NOT SHOW THE BMA AND THE PLACE ON THE BMA CAN BE TRICKY WITH THE XOR
 	//print_debug(pc,targetPc,taken,pred_dst);
 
 }
