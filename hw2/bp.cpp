@@ -254,12 +254,12 @@ public:
 
     void force_upgrade(uint32_t pc, uint32_t target_address);
 
-	void print(){
-		std::cout<<"BTB to be print"<<std::endl;
-		for (int i = 0; i < _size; ++i) {
-			std::cout<<i<<". T: "<<_tag[i]<< " A: "<<_target[i]<<" H: "<<BHR[i].to_print()<<std::endl;
-		}
-	}
+	//void print(){
+	//	std::cout<<"BTB to be print"<<std::endl;
+	//	for (int i = 0; i < _size; ++i) {
+	//		std::cout<<i<<". T: "<<_tag[i]<< " A: "<<_target[i]<<" H: "<<BHR[i].to_print()<<std::endl;
+	//	}
+	//}
 
 private:
 	int _size;
@@ -332,6 +332,7 @@ void BranchTargetBuffer::flush(int short_pc) {
 
 }
 
+
 void BranchTargetBuffer::force_upgrade(uint32_t pc, uint32_t target_address) {
     int short_pc = bits_to_take(LSB_MACRO, this->_pc_size, pc);
     this->_target[short_pc] = target_address;
@@ -373,10 +374,10 @@ public:
 	void update_BP(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst);
 
 	void GetStats_BP(SIM_stats &curStats);
-	void print_debug(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst){
-		std::cout<<"the imput was pc: "<<pc<<" did it branch: "<<((taken)?"YES":"NO")<<" destination after theb: "<<targetPc<<std::endl;
-		BTB.print();
-	}
+//	void print_debug(uint32_t pc, uint32_t targetPc, bool taken, uint32_t pred_dst){
+//		std::cout<<"the imput was pc: "<<pc<<" did it branch: "<<((taken)?"YES":"NO")<<" destination after theb: "<<targetPc<<std::endl;
+//		BTB.print();
+//	}
 
 
 protected:
@@ -501,29 +502,35 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
     int place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
     STATES BMA_prediciotn = this->BMA[short_pc].read_state_at(place_BMA);
     //TODO THIS IS DEBUG DONT KNOW IF WE NEED THE NEXT CHECK FOR RESET
-	bool good_prediction_diferrent_dest =((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst));
-	good_prediction_diferrent_dest= false;
+	//bool good_prediction_diferrent_dest =((is_taken_exe == BMA_prediciotn)&& (targetPc != pred_dst));
+	//good_prediction_diferrent_dest= false;
 
 //---This part is the Pre-upgrade
 //         in the pre upgrade we want to check if is the same tag or if has a different tag
 //        in case of a different tag we will flush and update the state machines (only at the new address(history lst bit) 0 or (0 xor pc..))
 //         in case of same tag we will it will check if we made the write prediction (I SET IT UP TO FALSE NEED TO CHECK THIS)
 //         and the destine was different in this case we will also flush  and reset the state machines
+	
+	if (!same_tag) {
+		if (!_bool_GlobalHist)
+		{
+			this->BTB.flush(short_pc);
+			get_place = 0;
 
-    if(!same_tag  ){
-        this->BTB.flush(short_pc || (good_prediction_diferrent_dest && taken));
-        get_place=0;
-		//re sets the place  just in case we change it for the read
-		place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
+			//re sets the place  just in case we change it for the read
+			place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
-		if (_bool_GlobalTable) {
-			this->BMA[0].reset(place_BMA);
-		} else {
-			this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
+			if (_bool_GlobalTable) {
+				this->BMA[0].reset(place_BMA);
+			}
+			else {
+				this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
+			}
 		}
 	}
+	
 
-
+	
 
 
 	//this part is the readings for the machine stats and does not update nothing on the btb or bma
@@ -540,7 +547,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	// 				on this update
 	//                 TODO IMPORTANT TO TAKE IN TO ACOUNT THAT IF THE ANWSER WAS NOT TAKEN THE STATE MACHINE WILL GO TO SNT
 	BMA[(_bool_GlobalTable) ? 0 : short_pc].update_state_at(place_BMA, is_taken_exe);
-
+	
 
 	//For the BTB we will update the result from the execute on the last bit of an address history ( 0 0 0 )->taken->(0 0 1)
 	//                  also add the new tag always (maYbE here the error
@@ -549,7 +556,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	}
 	else {
 		this->BTB.update_at_pc(pc, is_taken_exe, targetPc);
-		if (!same_tag || good_prediction_diferrent_dest) this->BTB.force_upgrade(pc,targetPc ); //this force a new adress
+		//if (!same_tag ) this->BTB.force_upgrade(pc,targetPc ); //this force a new adress
 	}
 
 	//debug level this method will print the full table BTB with the updates on the history
