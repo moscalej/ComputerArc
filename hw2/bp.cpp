@@ -293,9 +293,9 @@ void BranchTargetBuffer::update_at_pc(int pc, STATES last_prediction, int target
 	int short_pc = bits_to_take(LSB_MACRO, this->_pc_size, pc);
 	int new_tag = bits_to_take(LSB_MACRO, this->_tag_size, pc);
 
-    if(last_prediction ==TAKEN ) {
+    //if(last_prediction ==TAKEN ) {
         this->_target[short_pc] = target_address;
-    }
+    //}
     this->_tag[short_pc] = new_tag;
     this->BHR[short_pc].update_lsb(last_prediction);
 
@@ -521,7 +521,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 			place_BMA = (_bool_isShare) ? (get_place ^ xor_pc) : get_place;
 
 			if (_bool_GlobalTable) {
-				this->BMA[0].reset(place_BMA);
+				//this->BMA[0].reset(place_BMA);
 			}
 			else {
 				this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
@@ -534,8 +534,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 
 
 	//this part is the readings for the machine stats and does not update nothing on the btb or bma
-	if ((BMA[(_bool_GlobalTable) ? 0 : short_pc].read_state_at(place_BMA) != is_taken_exe )
-        || (taken && pred_dst != targetPc)) {
+	if ((taken && pred_dst != targetPc) || (!taken && pred_dst != (pc+4)) ) {
         this->machine_stats.flush_num++;
     }
     this->machine_stats.br_num++;
