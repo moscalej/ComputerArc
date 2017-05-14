@@ -6,7 +6,7 @@
 #include <iostream>
 
 #define MAX_BI_MODAL 255
-#define MAX_BTB_ROW 30
+#define MAX_BTB_ROW 32
 #define MAX_HISTORY_BITS 8
 #define LSB_MACRO 2
 
@@ -527,6 +527,13 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 				this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
 			}
 		}
+		if (_bool_GlobalHist && !_bool_GlobalTable)
+		{
+			
+				this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
+			
+		}
+
 	}
 	
 
