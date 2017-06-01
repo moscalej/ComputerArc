@@ -454,6 +454,8 @@ void BranchPredictorUnit::init_BPU(unsigned btbSize, unsigned historySize, unsig
 
 }
 
+
+
 bool BranchPredictorUnit::predict_BPU(uint32_t pc, uint32_t &dst) {
 	int temp = get_target(pc);
 	int index_BMA = get_BMA_index(pc);
@@ -531,12 +533,9 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 		{
 			
 				this->BMA[short_pc].init_BMA((int)pow(2, _size_history));
-			
 		}
-		
-
 	}
-	
+
 
 	
 
@@ -563,7 +562,7 @@ void BranchPredictorUnit::update_BP(uint32_t pc, uint32_t targetPc, bool taken, 
 	}
 	else {
 		this->BTB.update_at_pc(pc, is_taken_exe, targetPc);
-		//if (!same_tag ) this->BTB.force_upgrade(pc,targetPc ); //this force a new adress
+
 	}
 
 	//debug level this method will print the full table BTB with the updates on the history
