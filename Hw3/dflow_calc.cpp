@@ -10,16 +10,16 @@
 using namespace std;
 
 
-/**Monkey = A pice of a change of conected proccess
+/**Node
+ *This class is the base data-structure we will use
+ * it has the ability to conect like the
  *
- * a monkey will contain all the information need it on the graph
- * pointers to the previus monkeys
  *
  */
 class Node {
 public:
     Node();
-    //Todo: check the constructor and the copy constructor
+
 
     Node *left_arm;
     Node *rigth_arm;
@@ -65,11 +65,13 @@ public:
 
 
     Node *longest_path_node;
+
+    Node * find_node(unsigned int i);
 };
 
 int DependenceTree::add_node(InstInfo basic_info, int weight) {
     Node *temp = new Node;
-    this->number_of_nodes++;
+
 
     temp->src1_name = basic_info.src1Idx;
     temp->src2_name = basic_info.src2Idx;
@@ -77,7 +79,7 @@ int DependenceTree::add_node(InstInfo basic_info, int weight) {
     temp->node_weight = weight;
     temp->total_weith = temp->node_weight;
     temp->program_counter = this->number_of_nodes;
-
+    this->number_of_nodes++;
     map<int, Node *>::iterator it;
 
     for (it = this->_NodeLastLayer.begin(); it != this->_NodeLastLayer.end(); ++it) { //search only on the last instans of each register
@@ -116,10 +118,11 @@ int DependenceTree::get_monkey_weight(int program_counter) {
     it = this->_NodeTotalMap.find(program_counter);
     if (it == this->_NodeTotalMap.end())
         return 0;
-    return it->second->strong_arm->total_weith;
+    return (it->second->strong_arm == NULL)?0:it->second->strong_arm->total_weith;
 }
 
 DependenceTree::DependenceTree() {
+    this->number_of_nodes=0;
 
 }
 
@@ -137,6 +140,15 @@ void DependenceTree::setup(const unsigned int *opsLatency, const InstInfo *progT
 
 }
 
+Node * DependenceTree::find_node(unsigned int i) {
+    map<int,Node *>::iterator it;
+    it = this->_NodeTotalMap.find(i);
+    if (it==this->_NodeTotalMap.end()){
+        return NULL;
+    }
+    return it->second;
+}
+
 
 ProgCtx analyzeProg(const unsigned int opsLatency[], const InstInfo progTrace[], unsigned int numOfInsts) {
     DependenceTree *DT = new DependenceTree;
@@ -151,7 +163,7 @@ void freeProgCtx(ProgCtx ctx) {
 
 int getInstDepth(ProgCtx ctx, unsigned int theInst) {
     DependenceTree *MT = (DependenceTree *) ctx;
-    return MT->get_monkey_weight(theInst);
+    return MT->get_monkey_weight(theInst);//Todo : there is an instruccion 0
 }
 
 int getProgDepth(ProgCtx ctx) {
@@ -161,7 +173,11 @@ int getProgDepth(ProgCtx ctx) {
 
 int getInstDeps(ProgCtx ctx, unsigned int theInst, int *src1DepInst, int *src2DepInst) {
     DependenceTree *MT = (DependenceTree *) ctx;
-    return -1;
+    Node * instruction =MT->find_node(theInst);
+    if(instruction == NULL) return -1;
+    *src1DepInst =(instruction->left_arm != NULL)? instruction->left_arm->program_counter: -1;
+    *src2DepInst =(instruction->rigth_arm != NULL)? instruction->rigth_arm->program_counter : -1;
+    return 0;
 }
 
 
