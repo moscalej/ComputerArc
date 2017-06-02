@@ -16,27 +16,27 @@ using namespace std;
  * pointers to the previus monkeys
  *
  */
-class Monkey{
+class Node{
 public:
-    Monkey();
+    Node();
     //Todo: check the constructor and the copy constructor
 
-    Monkey * left_arm;
-    Monkey * rigth_arm;
-    Monkey * strong_arm;
+    Node * left_arm;
+    Node * rigth_arm;
+    Node * strong_arm;
 
     int  total_weith;
     int monkey_weith;
 
-    int left_name;
-    int righ_name;
-    int monkey_number;
-    int monkey_rank;
+    int src1_name;
+    int src2_name;
+    int dest;
+    int program_counter;
     bool empty_tail;
     bool on_the_tree;
 };
 
-Monkey::Monkey() {
+Node::Node() {
     this->left_arm = NULL;
     this->rigth_arm = NULL;
     this->strong_arm= NULL;
@@ -44,57 +44,57 @@ Monkey::Monkey() {
 
 
 
-class MonkeyTree{
+class DependenceTree{
 public:
-    MonkeyTree(const unsigned int opsLatency[], const InstInfo progTrace[], unsigned int numOfInsts);
-    int add_monkey(InstInfo coconut);
+    DependenceTree(const unsigned int opsLatency[], const InstInfo progTrace[], unsigned int numOfInsts);
+    int add_node(InstInfo basic_info);
     int get_monkey_weith(int monkey_number);
-    void connecto_monkey(map<int, Monkey *>::iterator it, Monkey *new_monkey, string arm);
+    void connecto_monkey(map<int, Node *>::iterator it, Node *new_monkey, string arm);
     int get_long_path_monkey();
 
     int max_moneys_on_tree;
     int number_of_monkeys;
-    std::map<int,Monkey*> _MOTT;
-    std::map<int,Monkey*> _MOTG;
-    std::map<int,int> _MWT;
+    std::map<int,Node*> _NodeTotalMap;
+    std::map<int,Node*> _NodeLastLayer;
+    std::map<int,int> _NodeWeitghTrans;
 
-    Monkey * fat_monkey;
+    Node * fat_monkey;
 };
 
-int MonkeyTree::add_monkey(InstInfo coconut) {
-    Monkey * temp = new Monkey;
+int DependenceTree::add_node(InstInfo basic_info) {
+    Node * temp = new Node;
     this->number_of_monkeys ++;
-    temp->righ_name =coconut.src1Idx;
-    temp->left_name = coconut.src2Idx;
-    temp->monkey_number = coconut.dstIdx;
-    temp->monkey_weith = this->_MWT.find(coconut.opcode)->second;
+    temp->src1_name =basic_info.src1Idx;
+    temp->src2_name = basic_info.src2Idx;
+    temp->dest = basic_info.dstIdx;
+    temp->monkey_weith = this->_NodeWeitghTrans.find(basic_info.opcode)->second;
     temp->total_weith= temp->monkey_weith;
-    temp->monkey_rank = this->number_of_monkeys;
+    temp->program_counter = this->number_of_monkeys;
 
-    map<int,Monkey*>::iterator it;
-    for (it = this->_MOTT.begin();it != this->_MOTT.end() ; ++it) {
-        if (it->second->monkey_number == temp->left_name){
+    map<int,Node*>::iterator it;
+    for (it = this->_NodeLastLayer.begin();it != this->_NodeLastLayer.end() ; ++it) { //search only on the last instans of each register
+        if (it->second->dest == temp->src1_name){
             this->connecto_monkey(it, temp, "l");
-            //todo:remove from the end of the line map
-
-        }else if(it->second->monkey_number == temp->righ_name ){
+        }else if(it->second->dest == temp->src2_name ){
             this->connecto_monkey(it, temp, "r");
         }
-
     }
     if (temp->total_weith > this->fat_monkey->total_weith){
         this->fat_monkey = temp;
     }
-    std::pair<std::map<int, Monkey  *>::iterator, bool> ret;
-    ret = this->_MOTT.insert(std::pair<int, Monkey *>(temp->monkey_rank, temp));
+    //add the value for the key
+    this->_NodeLastLayer[temp->dest]=temp;
+
+    std::pair<std::map<int, Node  *>::iterator, bool> ret;
+    ret = this->_NodeTotalMap.insert(std::pair<int, Node *>(temp->program_counter, temp));
     if (ret.second == false) {
         delete (temp);
-        return false;
+        return 0;
     }
     return temp->total_weith;
 }
 
-void MonkeyTree::connecto_monkey(map<int, Monkey *>::iterator it, Monkey * new_monkey, string arm) {
+void DependenceTree::connecto_monkey(map<int, Node *>::iterator it, Node * new_monkey, string arm) {
 
     (arm == "l") ? new_monkey->left_arm = it->second : new_monkey->rigth_arm = it->second;
     it->second->empty_tail = false;
@@ -106,25 +106,24 @@ void MonkeyTree::connecto_monkey(map<int, Monkey *>::iterator it, Monkey * new_m
     }
 }
 
-int MonkeyTree::get_long_path_monkey() {
+int DependenceTree::get_long_path_monkey() {
     return this->fat_monkey->total_weith;
 }
 
-int MonkeyTree::get_monkey_weith(int monkey_number) {
-    map<int,Monkey *>::iterator  it;
-    it = this->_MOTT.find(monkey_number);
-    if (it == this->_MOTT.end())
+int DependenceTree::get_monkey_weith(int monkey_number) {
+    map<int,Node *>::iterator  it;
+    it = this->_NodeTotalMap.find(monkey_number);
+    if (it == this->_NodeTotalMap.end())
         return 0;
     return it->second->strong_arm->total_weith;
 }
 
-MonkeyTree::MonkeyTree(const unsigned int *opsLatency, const InstInfo *progTrace, unsigned int numOfInsts) {
+DependenceTree::DependenceTree(const unsigned int *opsLatency, const InstInfo *progTrace, unsigned int numOfInsts) {
     this->max_moneys_on_tree = numOfInsts;
     for (int i = 0; i < numOfInsts; ++i) {
 
-
+//todo:change
     }
-
 }
 
 
@@ -136,7 +135,7 @@ void freeProgCtx(ProgCtx ctx) {
 }
 
 int getInstDepth(ProgCtx ctx, unsigned int theInst) {
-    MonkeyTree * MT = (MonkeyTree *) ctx;
+    DependenceTree * MT = (DependenceTree *) ctx;
 
     return MT->get_monkey_weith(theInst);
 }
@@ -146,7 +145,7 @@ int getInstDeps(ProgCtx ctx, unsigned int theInst, int *src1DepInst, int *src2De
 }
 
 int getProgDepth(ProgCtx ctx) {
-    MonkeyTree * MT = (MonkeyTree *) ctx;
+    DependenceTree * MT = (DependenceTree *) ctx;
     return MT->get_long_path_monkey();
 }
 
