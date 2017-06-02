@@ -23,14 +23,15 @@ extern "C" {
 typedef void *ProgCtx;
 #define PROG_CTX_NULL NULL
 
-/// Instruction info required for dataflow calculations
+/// Instruction info required for data-flow calculations
 /// This structure provides the opcode and the register file index of each source operand and the destination operand
 typedef struct {
     unsigned int opcode;
     unsigned int dstIdx;
     unsigned int src1Idx;
     unsigned int src2Idx;
-} InstInfo;
+}
+        InstInfo;
 
 /** analyzeProg: Analyze given program and save results
     \param[in] opsLatency An array of MAX_OPS values of functional unit latency for each opcode
