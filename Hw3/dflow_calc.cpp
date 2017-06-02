@@ -56,6 +56,7 @@ Node::Node() {
 class DependenceTree {
 public:
     DependenceTree();
+    DependenceTree(const DependenceTree&);
 
     virtual ~DependenceTree();
 
@@ -175,10 +176,13 @@ DependenceTree::DependenceTree() {
 }
 
 DependenceTree::~DependenceTree() {
-    for (map<int, Node *>::iterator it = this->_NodeTotalMap.begin(); it != this->_NodeTotalMap.end(); it++) {
-        delete (it->second);
+    map<int, Node *>::iterator it;
+    for ( it = this->_NodeTotalMap.begin(); it != this->_NodeTotalMap.end(); it++) {
+        delete it->second;
         it->second = NULL;
     }
+    this->_NodeTotalMap.clear();
+    this->_NodeLastLayer.clear();
 
 }
 
@@ -196,6 +200,14 @@ Node *DependenceTree::find_node(unsigned int instruction_number) {
         return NULL;
     }
     return it->second;
+}
+
+DependenceTree::DependenceTree(const DependenceTree &rsh ) {
+    this->longest_path_node=rsh.longest_path_node;
+    this->_NodeTotalMap = rsh._NodeTotalMap;
+    this->number_of_nodes = rsh.number_of_nodes;
+    this->_NodeLastLayer = rsh._NodeLastLayer;
+    //why do i need a copy constructor;?
 }
 
 
