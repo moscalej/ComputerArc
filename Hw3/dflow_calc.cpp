@@ -86,7 +86,7 @@ int MonkeyTree::add_monkey(InstInfo coconut) {
         this->fat_monkey = temp;
     }
     std::pair<std::map<int, Monkey  *>::iterator, bool> ret;
-    ret = this->_MOTT.insert(std::pair<int, Monkey *>(temp->monkey_number, temp));
+    ret = this->_MOTT.insert(std::pair<int, Monkey *>(temp->monkey_rank, temp));
     if (ret.second == false) {
         delete (temp);
         return false;
