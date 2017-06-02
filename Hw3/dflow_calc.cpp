@@ -132,7 +132,7 @@ int DependenceTree::add_node(InstInfo basic_info, int weight) {
          it != this->_NodeLastLayer.end(); it++) { //search only on the last instans of each register
         if (it->second->destination_number == temp->src1_name) {
             this->_connect_source_to_dest(it->second, temp, "l");
-        } else if (it->second->destination_number == temp->src2_name) {
+        }  if (it->second->destination_number == temp->src2_name) {
             this->_connect_source_to_dest(it->second, temp, "r");
         }
     }
