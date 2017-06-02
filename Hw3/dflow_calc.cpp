@@ -31,6 +31,7 @@ public:
     int left_name;
     int righ_name;
     int monkey_number;
+    int monkey_rank;
     bool empty_tail;
     bool on_the_tree;
 };
@@ -45,26 +46,30 @@ Monkey::Monkey() {
 
 class MonkeyTree{
 public:
+    MonkeyTree(const unsigned int opsLatency[], const InstInfo progTrace[], unsigned int numOfInsts);
     int add_monkey(InstInfo coconut);
     int get_monkey_weith(int monkey_number);
+    void connecto_monkey(map<int, Monkey *>::iterator it, Monkey *new_monkey, string arm);
     int get_long_path_monkey();
 
-
+    int max_moneys_on_tree;
+    int number_of_monkeys;
     std::map<int,Monkey*> _MOTT;
     std::map<int,Monkey*> _MOTG;
     std::map<int,int> _MWT;
-    Monkey * fat_monkey;
 
-    void connecto_monkey(map<int, Monkey *>::iterator it, Monkey *new_monkey, string arm);
+    Monkey * fat_monkey;
 };
 
 int MonkeyTree::add_monkey(InstInfo coconut) {
     Monkey * temp = new Monkey;
+    this->number_of_monkeys ++;
     temp->righ_name =coconut.src1Idx;
     temp->left_name = coconut.src2Idx;
     temp->monkey_number = coconut.dstIdx;
     temp->monkey_weith = this->_MWT.find(coconut.opcode)->second;
     temp->total_weith= temp->monkey_weith;
+    temp->monkey_rank = this->number_of_monkeys;
 
     map<int,Monkey*>::iterator it;
     for (it = this->_MOTT.begin();it != this->_MOTT.end() ; ++it) {
@@ -79,6 +84,12 @@ int MonkeyTree::add_monkey(InstInfo coconut) {
     }
     if (temp->total_weith > this->fat_monkey->total_weith){
         this->fat_monkey = temp;
+    }
+    std::pair<std::map<int, Monkey  *>::iterator, bool> ret;
+    ret = this->_MOTT.insert(std::pair<int, Monkey *>(temp->monkey_number, temp));
+    if (ret.second == false) {
+        delete (temp);
+        return false;
     }
     return temp->total_weith;
 }
@@ -105,6 +116,15 @@ int MonkeyTree::get_monkey_weith(int monkey_number) {
     if (it == this->_MOTT.end())
         return 0;
     return it->second->strong_arm->total_weith;
+}
+
+MonkeyTree::MonkeyTree(const unsigned int *opsLatency, const InstInfo *progTrace, unsigned int numOfInsts) {
+    this->max_moneys_on_tree = numOfInsts;
+    for (int i = 0; i < numOfInsts; ++i) {
+
+
+    }
+
 }
 
 
