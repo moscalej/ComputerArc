@@ -172,7 +172,6 @@ int DependenceTree::get_instruction_path(int instruction_number) {
 DependenceTree::DependenceTree() {
     this->longest_path_node = NULL;
     this->number_of_nodes = 0;
-
 }
 
 DependenceTree::~DependenceTree() {
@@ -190,7 +189,6 @@ void DependenceTree::setup(const unsigned int *opsLatency, const InstInfo *progT
     for (int i = 0; i < (int) numOfInsts; ++i) {
         this->add_node(progTrace[i], opsLatency[progTrace[i].opcode]);
     }
-
 }
 
 Node *DependenceTree::find_node(unsigned int instruction_number) {
@@ -207,7 +205,6 @@ DependenceTree::DependenceTree(const DependenceTree &rsh ) {
     this->_NodeTotalMap = rsh._NodeTotalMap;
     this->number_of_nodes = rsh.number_of_nodes;
     this->_NodeLastLayer = rsh._NodeLastLayer;
-    //why do i need a copy constructor;?
 }
 
 
