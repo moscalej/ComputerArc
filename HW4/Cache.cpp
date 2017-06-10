@@ -25,8 +25,10 @@ void Cache::write(int set, int new_tag,int way) {
 //trying to implement lru
 int Cache::evict(int set, int tag) {
     for (int j = 0; j< association_-1; j++)
-        if (LRU_[set][j]==0)
+        if (LRU_[set][j]==0) {
+            ways_[j]->write(set,-1);
             return j;
+        }
 }
 
 void Cache::update_LRU(int way,int set) {
