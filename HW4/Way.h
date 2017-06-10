@@ -18,7 +18,7 @@ public:
 private:
     int size_;
     vector<int> tags;
-    vector<int> dirty_bit;
+    //vector<int> dirty_bit;
 };
 
 

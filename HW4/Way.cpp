@@ -5,17 +5,29 @@
 #include "Way.h"
 
 bool Way::access(int set, int tag) {
-    return false;
+    if (set >= size_)
+        return false;
+    if (tag==tags[set])
+        return true;
+    else
+        return false;
 }
 
 void Way::write(int set, int new_tag) {
+    if (set>=size_)
+        return;
+    else
+        tags[set]=new_tag;
+    return;
 
 }
 
-void Way::evict(int set, int tag) {
 
-}
 
 Way::Way(int size) {
+    size_=size;
+    for(int i = 0; i < size_; i++){
+        tags.push_back(-1);
+    }
 
 }
