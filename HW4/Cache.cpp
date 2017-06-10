@@ -6,14 +6,25 @@
 
 
 bool Cache::access(int set, int tag) {
+    accesses_++;
+    for (int i=0; i<association_; i++){
+        if (ways_[i]->access(set,tag))
+        {
+            hits_++;
+            update_LRU(set);
+            return true;
+        }
+    }
+
     return false;
 }
 
-void Cache::write(int set, int new_tag) {
-
+void Cache::write(int set, int new_tag,int way) {
+         ways_[way]->write(set,new_tag);
 }
 
 int Cache::evict(int set, int tag) {
+
 
 }
 

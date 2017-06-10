@@ -29,7 +29,7 @@ public:
      */
 
 
-    void write(int set, int new_tag);
+    void write(int set, int new_tag,int way);
     int evict(int set, int tag);
     void update_LRU(int set);
 private:
