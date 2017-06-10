@@ -9,16 +9,35 @@
 #include <vector>
 using namespace std;
 
+
+/**
+ * This class works only with intergers
+ */
 class Way {
 public:
     Way(int size);
+
+    /**
+     * This method goes to the tag array[set] (set = bits [a..b])
+     * in the array tags [ set] == tag (tag = address [bit ...a)
+     * @param set
+     * @param tag
+     * @return
+     */
     bool access(int set,int tag);
+
+    /**
+     * This method writes a new tag to the tags[set]
+     * @param set
+     * @param new_tag
+     */
     void write(int set, int new_tag);
-    void evict(int set, int tag);
+
+
 private:
     int size_;
     vector<int> tags;
-    vector<int> dirty_bit;
+   //vector<int> dirty_bit;
 };
 
 
