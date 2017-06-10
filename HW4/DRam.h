@@ -11,6 +11,7 @@ private:
     int _Address;
     Cache l1_cache;
     Cache l2_cache;
+    int alloc_;
     int mem_cyc_;
     int l1_cyc_;
     int l2_cyc_;

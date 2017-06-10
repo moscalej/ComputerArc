@@ -39,7 +39,7 @@ private:
     void update_LRU(int set);
     int cache_size_;
     int association_;
-    vector<Way> ways_;
+    vector<Way> *ways_;
     vector<int> LRU_;
     int accesses;
     int hits;
