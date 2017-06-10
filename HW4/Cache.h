@@ -31,13 +31,13 @@ public:
 
     void write(int set, int new_tag,int way);
     int evict(int set, int tag);
-    void update_LRU(int set);
+    void update_LRU(int way,int set);
 private:
 
     int association_;
     int cache_size_;
     vector<Way*> ways_;
-    vector<int> LRU_;
+    vector<vector <int>> LRU_;
     int accesses_;
     int hits_;
 

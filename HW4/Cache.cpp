@@ -11,7 +11,7 @@ bool Cache::access(int set, int tag) {
         if (ways_[i]->access(set,tag))
         {
             hits_++;
-            update_LRU(set);
+            update_LRU(i,set);
             return true;
         }
     }
@@ -22,13 +22,21 @@ bool Cache::access(int set, int tag) {
 void Cache::write(int set, int new_tag,int way) {
          ways_[way]->write(set,new_tag);
 }
-
+//trying to implement lru
 int Cache::evict(int set, int tag) {
-
-
+    for (int j = 0; j< association_-1; j++)
+        if (LRU_[set][j]==0)
+            return j;
 }
 
-void Cache::update_LRU(int set) {
+void Cache::update_LRU(int way,int set) {
+    int x = LRU_[set][way];
+    LRU_[set][way] = association_-1;
+    for (int j = 0; j< association_-1; j++) {
+        if ((j != way) && (LRU_[set][j] > x))
+            LRU_[set][j]--;
+    }
+    return;
 
 }
 
@@ -40,8 +48,10 @@ Cache::Cache(int cache_size, int association) {
         ways_.push_back(&new_way);
     }
     for(int i = 0; i < cache_size_; i++){
-        ways_.push_back(0);
+        for (int j=0; j<association_; j++)
+        LRU_[i].push_back(association_-1-j);//not sure about sequence, should be 0,1,2..
     }
+
     accesses_=0;
     hits_=0;
 
