@@ -5,6 +5,10 @@ public:
     void execute(char operation, int address);
     void calc_stats();//todo: check how to return values..
 private:
+    void transform_adrres_();
+
+    int _Tag;
+    int _Address;
     Cache l1_cache;
     Cache l2_cache;
     int alloc_;
