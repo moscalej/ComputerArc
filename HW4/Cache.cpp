@@ -2,6 +2,7 @@
 // Created by alejandro on 6/10/2017.
 //
 
+#include <tgmath.h>
 #include "Cache.h"
 
 
@@ -56,7 +57,7 @@ Cache::Cache(int cache_size, int association) {
     association_=association;
     cache_size_=cache_size;
     for(int i = 0; i < association_; i++){
-        Way* tmp =new Way(cache_size);
+        Way* tmp =new Way(pow(2,cache_size-association));
         ways_.push_back(tmp);
     }
     for(int i = 0; i < cache_size_; i++){
@@ -69,7 +70,7 @@ Cache::Cache(int cache_size, int association) {
 
 
 }
-
+//todo:
 void Cache::erase(int set, int tag_erase) {
 
 }
