@@ -85,6 +85,8 @@ int main(int argc, char **argv) {
 		// DEBUG - remove this line
 		cout << " (dec) " << num << endl;
 
+        //todo: dram.execute(operation,num)
+
 	}
 
 	double L1MissRate;
