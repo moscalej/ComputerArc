@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 			return 0;
 		}
 	}
-
+//todo: build DRAM
 	while (getline(file, line)) {
 
 		stringstream ss(line);

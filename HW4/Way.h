@@ -32,7 +32,7 @@ public:
      * @param new_tag
      */
     void write(int set, int new_tag);
-
+    int get_tag(int set);
 
 private:
     int size_;

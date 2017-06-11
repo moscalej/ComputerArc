@@ -31,3 +31,7 @@ Way::Way(int size) {
     }
 
 }
+
+int Way::get_tag(int set) {
+    return tags[set];
+}
