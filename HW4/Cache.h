@@ -37,7 +37,7 @@ private:
     int association_;
     int cache_size_;
     vector<Way*> ways_;
-    vector<vector <int>> LRU_;
+    vector<vector <int>> LRU_;//??? why vector int and not a linket list?
     int accesses_;
     int hits_;
 
