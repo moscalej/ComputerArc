@@ -24,7 +24,6 @@ int bits_to_take(int lsb, int number_of_bits, int address) {
         address = address / 2;
     }
 
-
     for (int i = 0; i < number_of_bits; i++) {
         if (address == 0) break;
         temp2 = address % 2;
