@@ -56,21 +56,24 @@ void DRam::execute(char operation, int address) {
             //not found L1 and L2 writes on L2 (LRU) search the block on L1(erase) writes l1
             //this make sure is on L2 and L1, may need to update L1 LRU
             int old_tag_l2 = l2_cache.evict(set2);
+            l2_cache.write(set2, tag2);
+
             int tag_l1_to_del = this->tag_l2_to_l1(old_tag_l2, set2, false);
             int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
-            l2_cache.write(set2, tag2);
 
             l1_cache.evict(set1);
             l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
             l1_cache.write(set1, tag1);
         }
     } else if (alloc_ == 1) {
-        int old_tag_l1 = l1_cache.evict(set1);
-        int tag_l2_to_del = this->tag_l2_to_l1(old_tag_l1, set1, true);
-        int set_l2_to_del = this->set_l2_to_l1(old_tag_l1, set1, true);
-        l1_cache.write(set1, tag1);
-        l2_cache.erase(set_l2_to_del, tag_l2_to_del);
+        int old_tag_l2 = l2_cache.evict(set2);
+        int tag_l1_to_del = this->tag_l2_to_l1(old_tag_l2, set2, false);
+        int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
         l2_cache.write(set2, tag2);
+
+        l1_cache.evict(set1);
+        l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
+        l1_cache.write(set1, tag1);
         return;
     } else
         return;

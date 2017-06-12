@@ -17,7 +17,6 @@ bool Cache::access(int set, int tag) {
             return true;
         }
     }
-
     return false;
 }
 

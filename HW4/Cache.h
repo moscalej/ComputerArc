@@ -30,6 +30,7 @@ public:
     bool access(int set,int tag);
 
     /**
+     * Always use after Evict method
      * TheMethod writes a tags[set] = Tag on the Way corresponding
      * @param set
      * @param new_tag
