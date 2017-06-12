@@ -16,6 +16,8 @@ using namespace std;
 class Way {
 public:
     Way(){};
+    virtual ~Way();
+
     Way(int size);
 
     /**
@@ -52,8 +54,6 @@ public:
      *         -1 if the block does not mach the tag
      */
     int erase_entry(int tag, int set);
-
-    virtual ~Way();
 
 protected:
     int size_;

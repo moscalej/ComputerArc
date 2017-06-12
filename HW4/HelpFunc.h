@@ -8,6 +8,15 @@
 #include <cmath>
 #include <iostream>
 
+
+/** Bits to take
+ * this function will transform a int Address to [Msb.. [A[number_bits]..lsb] ..Lsb] and then make a
+ * an int from a subset of the address
+ * @param lsb - the bit number that indicates the least significant bit of the new addres
+ * @param number_of_bits
+ * @param address
+ * @return
+ */
 int bits_to_take(int lsb, int number_of_bits, int address) {
     int temp = 0;
     int temp2 = 0;
@@ -26,10 +35,16 @@ int bits_to_take(int lsb, int number_of_bits, int address) {
     return temp;
 }
 
-int re_build_address(int tag, int set, int offset_size, int set_size) {
-    int address = 0;
-    address = (int) (pow(2, offset_size + set_size) * tag + pow(2, offset_size) * set);
-    return address;
+/**
+ * This fucntion will build an Address from in the next form
+ * address[{tag},{set}]
+ * @param tag
+ * @param set
+ * @param set_size
+ * @return
+ */
+int re_build_address(int tag, int set, int set_size) {
+    return (int) (pow(2, set_size) * tag + set);
 }
 
 #endif //HW4_HELPFUNC_H

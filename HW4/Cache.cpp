@@ -60,6 +60,7 @@ void Cache::update_LRU(int way,int set) {
 int Cache::erase(int set, int tag_erase) {
     for (int i = 0; i < this->ways_.size(); ++i) {
         if(0 == this->ways_[i]->erase_entry(tag_erase, set)){
+            //TODO: check what happends with the LRU
             return 0;
         }
     }
@@ -93,9 +94,9 @@ Cache::Cache() {
 
 Cache::~Cache() {
 
-    vector<Way*>::iterator it;
-    for (it= this->ways_.begin(); it != this->ways_.end() ; ++it) {
-        delete it;
+
+    for (int i = 0; i < this->ways_.size(); ++i) {
+        delete this->ways_[i];
     }
     this->ways_.clear();
 

@@ -36,6 +36,14 @@ public:
      * @param way
      */
     void write(int set, int new_tag);
+
+    /**Evict
+     * this method will release a block corresponding to the set in the way less use
+     * according to the LRU algohorith
+     *
+     * @param set - int transformation [set_msb..set_lsb] from address[msb..[set_msb..set_lsb]..lsb]
+     * @return the tag that was se
+     */
     int evict(int set);
 
     /**

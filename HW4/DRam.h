@@ -6,30 +6,31 @@ public:
     void calc_stats();
 
     double getL2MissRate_() const;
-
     double getAvgAccTime_() const;
-
-private:
-//todo: check how to return values..
-    double L1MissRate_;
-public:
     double getL1MissRate_() const;
-
 private:
-    double L2MissRate_;
-    double avgAccTime_;
 
-    int b_size_;
-    int l1_size_;
+    int tag_l2_to_l1(int old_tag_l2, int set_l2, bool reverse);
+    int set_l2_to_l1(int old_tag_l2, int set_l2, bool reverse);
+
+    double avgAccTime_;
+    double L2MissRate_;
+    double L1MissRate_;
+
+    int b_size_; //block size
+    int l1_size_;//total number of kilo
     int l2_size_;
     int l1_assoc_;
+    int l1_cyc_;
+    int l2_cyc_;
+
+    int l1_set_size;
+    int l2_set_size;
+
     int l2_assoc_;
     int alloc_;
     int mem_cyc_;
-    int l1_cyc_;
-    int l2_cyc_;
+
     Cache l1_cache;
     Cache l2_cache;
-
-    int make_new_tag_l1(int old_tag_l2, int set_l2);
 };

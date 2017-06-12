@@ -8,8 +8,8 @@ DRam::DRam(int mem_cyc, int b_size, int alloc, int l1_size, int l1_assoc, int l1
            int l2_cyc) {
 
 
-    this->l1_cache.setup((int)pow(2, l1_size - b_size), l1_assoc);
-    this->l2_cache.setup((int)pow(2, l2_size - b_size), l2_assoc);
+    this->l1_cache.setup((int) pow(2, l1_size - b_size), l1_assoc);
+    this->l2_cache.setup((int) pow(2, l2_size - b_size), l2_assoc);
     this->alloc_ = alloc;
     this->mem_cyc_ = mem_cyc;
     this->l1_cyc_ = l1_cyc;
@@ -19,52 +19,61 @@ DRam::DRam(int mem_cyc, int b_size, int alloc, int l1_size, int l1_assoc, int l1
     this->l2_size_ = l2_size;
     this->l1_assoc_ = l1_assoc;
     this->l2_assoc_ = l2_assoc;
-    this->mem_access = 0;
+
     this->L1MissRate_ = 0;
     this->L2MissRate_ = 0;
     this->avgAccTime_ = 0;
+
+    this->l1_set_size = l1_size - b_size - l1_assoc;
+    this->l2_set_size = l2_size_ - b_size - l2_assoc;
 
 
 }
 
 // need to check tag,set correctness
 void DRam::execute(char operation, int address) {
-    int tag1 = address / ((int) pow(2, l1_size_ - l1_assoc_));
-    int tag2 = address / ((int) pow(2, l2_size_ - l2_assoc_));
-    int set1 = (address % (int) pow(2, ADDRESS_SIZE - l1_size_ - l1_assoc_)) / ((int) pow(2, b_size_));
-    int set2 = (address % (int) pow(2, ADDRESS_SIZE - l2_size_ - l2_assoc_)) / ((int) pow(2, b_size_));
+    int tag1 = bits_to_take(l1_set_size + this->b_size_, ADDRESS_SIZE, address);
+    int tag2 = bits_to_take(l2_set_size + this->b_size_, ADDRESS_SIZE, address);
+    int set1 = bits_to_take(this->b_size_, l1_set_size, address);
+    int set2 = bits_to_take(this->b_size_, l2_set_size, address);
     /*
      * if read, check l1, if hit return, else check l2 ,if miss fetch from mem
      * (num_of_mem_access++, write new value to both caches)
      * if write, if alloc=1 write value to both caches, if alloc ==0,
      * and "write miss" or cache full , evict from cache but don't write
      */
-    //todo: check case that assoc2<assoc1, might need to evict more from l1..
+
     if (operation == 'r') {
         if (l1_cache.access(set1, tag1))
             return;
         else if (l2_cache.access(set2, tag2)) {
-            int old_tag = l1_cache.evict(set1);
+            //if found on L2 we write it on L1 (LRU)
+            l1_cache.evict(set1);
             l1_cache.write(set1, tag1);
             return;
         } else {
-            int old_tag = l2_cache.evict(set2);//todo: reconstruct address and get write tag for l1
-            int new_tag = this->make_new_tag_l1(old_tag, set1);//todo , using set2 and old tag
+
+            //not found L1 and L2 writes on L2 (LRU) search the block on L1(erase) writes l1
+            //this make sure is on L2 and L1, may need to update L1 LRU
+            int old_tag_l2 = l2_cache.evict(set2);
+            int tag_l1_to_del = this->tag_l2_to_l1(old_tag_l2, set2, false);
+            int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
             l2_cache.write(set2, tag2);
-            l1_cache.erase(set1, new_tag);//todo: need to evict by tag, different mthod
+
+            l1_cache.evict(set1);
+            l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
             l1_cache.write(set1, tag1);
         }
     } else if (alloc_ == 1) {
-        int old_tag = l2_cache.evict(set2);//todo: reconstruct address and get write tag for l1
-        int new_tag = this->make_new_tag_l1(old_tag,set2);//todo , using set2 and old tag
-        l2_cache.write(set2, tag2);
-        l1_cache.erase(set1, new_tag);//todo: need to evict by tag, different mthod
+        int old_tag_l1 = l1_cache.evict(set1);
+        int tag_l2_to_del = this->tag_l2_to_l1(old_tag_l1, set1, true);
+        int set_l2_to_del = this->set_l2_to_l1(old_tag_l1, set1, true);
         l1_cache.write(set1, tag1);
+        l2_cache.erase(set_l2_to_del, tag_l2_to_del);
+        l2_cache.write(set2, tag2);
         return;
     } else
         return;
-
-
 }
 
 
@@ -75,10 +84,14 @@ void DRam::calc_stats() {
 
 }
 
-int DRam::make_new_tag_l1(int old_tag_l2, int set_l2) {
-    int address = re_build_address(old_tag_l2, set_l2, this->l2_size_, this->l2_assoc_);
-    int newtag = bits_to_take(this->l1_size_+this->l1_assoc_ ,ADDRESS_SIZE-this->l1_size_-this->l1_assoc_, address);
-    return newtag;
+int DRam::tag_l2_to_l1(int old_tag_l2, int set_l2, bool reverse) {
+    int address = re_build_address(old_tag_l2, set_l2, (reverse) ? this->l1_set_size : this->l2_set_size);
+    return bits_to_take((reverse) ? this->l2_set_size : this->l1_set_size, ADDRESS_SIZE, address);
+}
+
+int DRam::set_l2_to_l1(int old_tag_l2, int set_l2, bool reverse) {
+    int address = re_build_address(old_tag_l2, set_l2, (reverse) ? this->l1_set_size : this->l2_set_size);
+    return bits_to_take(0, (!reverse) ? this->l2_set_size : this->l1_set_size, address);
 }
 
 double DRam::getL2MissRate_() const {
