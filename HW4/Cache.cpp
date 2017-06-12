@@ -9,7 +9,7 @@
 
 bool Cache::access(int set, int tag) {
     accesses_++;
-    for (int i=0; i<association_; i++){
+    for (int i=0; i<ways_num_; i++){
         if (ways_[i]->access(set,tag))
         {
             hits_++;
@@ -21,7 +21,7 @@ bool Cache::access(int set, int tag) {
 }
 
 void Cache::write(int set, int new_tag) {
-    for (int i=0; i<association_; i++) {
+    for (int i=0; i<ways_num_; i++) {
         if (ways_[i]->get_tag(set)==-1) {
             ways_[i]->write(set, new_tag);
             update_LRU(i, set);
@@ -33,7 +33,7 @@ void Cache::write(int set, int new_tag) {
 }
 //trying to implement lru
 int Cache::evict(int set) {
-    for (int j = 0; j< association_-1; j++)
+    for (int j = 0; j< ways_num_-1; j++)
         if (LRU_[set][j]==0) {
             int old_tag;
             old_tag = ways_[j]->get_tag(set);
@@ -45,8 +45,8 @@ int Cache::evict(int set) {
 //oldest way value (LRU[set][way]==0), newest == association -1;
 void Cache::update_LRU(int way,int set) {
     int x = LRU_[set][way];
-    LRU_[set][way] = association_-1;
-    for (int j = 0; j< association_-1; j++) {
+    LRU_[set][way] = ways_num_-1;
+    for (int j = 0; j< ways_num_-1; j++) {
         if ((j != way) && (LRU_[set][j] > x))
             LRU_[set][j]--;
     }
@@ -72,7 +72,8 @@ void Cache::setup(int cache_size, int association) {
 
     association_=association;
     cache_size_=cache_size;
-    for(int i = 0; i < association_; i++){
+    ways_num_=pow(2,association_);
+    for(int i = 0; i < ways_num_; i++){
         Way* tmp =new Way((int)pow(2,cache_size-association));
         ways_.push_back(tmp);
     }
@@ -80,7 +81,7 @@ void Cache::setup(int cache_size, int association) {
     for(int i = 0; i < cache_size_; i++){
         vector<int> tmp;
         LRU_.push_back(tmp);
-        for (int j=0; j<association_; j++)
+        for (int j=0; j<ways_num_; j++)
             LRU_[i].push_back(j);//not sure about sequence, should be 0,1,2..
     }
 

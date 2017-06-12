@@ -69,6 +69,7 @@ private:
     int accesses_;
     int association_;
     int cache_size_;
+    int ways_num_;
     vector<Way*> ways_;
     vector<vector <int>> LRU_;
 
