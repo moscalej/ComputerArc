@@ -76,7 +76,10 @@ void Cache::setup(int cache_size, int association) {
         Way* tmp =new Way((int)pow(2,cache_size-association));
         ways_.push_back(tmp);
     }
+
     for(int i = 0; i < cache_size_; i++){
+        vector<int> tmp;
+        LRU_.push_back(tmp);
         for (int j=0; j<association_; j++)
             LRU_[i].push_back(j);//not sure about sequence, should be 0,1,2..
     }
