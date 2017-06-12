@@ -10,8 +10,16 @@
 
 class Cache {
 public:
-    Cache(int cache_size,int association);
+    Cache();
+    /*
+     * Methods for dealing with dynamic Allocation
+     */
+    Cache(const Cache &rhs);
+    Cache & operator=(const Cache &rhs);
+    virtual ~Cache();
 
+
+    void setup(int cache_size, int association);
 
     /**
      * This methods check use the ways->acces from each way
@@ -27,22 +35,33 @@ public:
      * @param new_tag
      * @param way
      */
-
-
     void write(int set, int new_tag);
     int evict(int set);
-    void update_LRU(int way,int set);
 
-    void erase(int set, int tag_erase);
+    /**
+     * This Method search and exepesific tag in a set
+     * if found it will delete it and return 0, if not found will return -1
+     * @param set
+     * @param tag_erase
+     * @return 0: it was found and delete
+     *          -1 : not found
+     */
+    int erase(int set, int tag_erase);
 
-    int accesses_;
-    int hits_;
-
+    /*
+     * This methods are the basic getters for the class
+     */
+    int getAccesses_() const;
+    int getHits_() const;
 private:
+
+    void update_LRU(int way,int set);
+    int hits_;
+    int accesses_;
     int association_;
     int cache_size_;
     vector<Way*> ways_;
-    vector<vector <int>> LRU_;//??? why vector int and not a linket list?
+    vector<vector <int>> LRU_;
 
 };
 

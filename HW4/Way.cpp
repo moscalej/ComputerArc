@@ -35,3 +35,16 @@ Way::Way(int size) {
 int Way::get_tag(int set) {
     return tags[set];
 }
+
+Way::~Way() {
+    this->tags.clear();
+
+}
+
+int Way::erase_entry(int tag, int set) {
+    if (this->access(set, tag)){
+        this->tags[set]=-1;
+        return 0;
+    }
+    return -1;
+}
