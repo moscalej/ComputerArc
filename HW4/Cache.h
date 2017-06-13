@@ -5,7 +5,7 @@
 #ifndef HW4_CACHE_H
 #define HW4_CACHE_H
 #include "Way.h"
-
+#include "HelpFunc.h"
 
 
 class Cache {
@@ -19,7 +19,7 @@ public:
     virtual ~Cache();
 
 
-    void setup(int cache_size, int association);
+    void setup(int l_size, int b_size, int association_num_bit);
 
     /**
      * This methods check use the ways->acces from each way
@@ -62,17 +62,23 @@ public:
      */
     int getAccesses_() const;
     int getHits_() const;
-private:
+
+protected:
+    int get_set(int address);
+    int get_tag(int address);
 
     void update_LRU(int way,int set);
     int hits_;
     int accesses_;
-    int association_;
-    int cache_size_;
+    int association_bit_num_;
+    int cache_size_bit_num;
     int ways_num_;
     vector<Way*> ways_;
     vector<vector <int>> LRU_;
 
+    int set_LSB;
+    int address_LSB;
+    int cache_bit_number;
 };
 
 

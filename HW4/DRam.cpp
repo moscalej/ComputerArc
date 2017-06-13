@@ -8,8 +8,8 @@ DRam::DRam(int mem_cyc, int b_size, int alloc, int l1_size, int l1_assoc, int l1
            int l2_cyc) {
 
 
-    this->l1_cache.setup((int) pow(2, l1_size - b_size), l1_assoc);
-    this->l2_cache.setup((int) pow(2, l2_size - b_size), l2_assoc);
+    this->l1_cache.setup(l1_size , b_size, l1_assoc);
+    this->l2_cache.setup(l2_size , b_size, l2_assoc);
     this->alloc_ = alloc;
     this->mem_cyc_ = mem_cyc;
     this->l1_cyc_ = l1_cyc;
@@ -36,6 +36,7 @@ void DRam::execute(char operation, int address) {
     int tag2 = bits_to_take(l2_set_size + this->b_size_, ADDRESS_SIZE, address);
     int set1 = bits_to_take(this->b_size_, l1_set_size, address);
     int set2 = bits_to_take(this->b_size_, l2_set_size, address);
+    int debug;
     /*
      * if read, check l1, if hit return, else check l2 ,if miss fetch from mem
      * (num_of_mem_access++, write new value to both caches)
@@ -43,7 +44,7 @@ void DRam::execute(char operation, int address) {
      * and "write miss" or cache full , evict from cache but don't write
      */
 
-    if (operation == 'r') {
+    if (operation == 'r' || operation == 'w' && alloc_ == 1) {
         if (l1_cache.access(set1, tag1))
             return;
         else if (l2_cache.access(set2, tag2)) {
@@ -57,33 +58,27 @@ void DRam::execute(char operation, int address) {
             //this make sure is on L2 and L1, may need to update L1 LRU
             int old_tag_l2 = l2_cache.evict(set2);
             l2_cache.write(set2, tag2);
+            if (old_tag_l2 >= 0) {
 
-            int tag_l1_to_del = this->tag_l2_to_l1(old_tag_l2, set2, false);
-            int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
+                int tag_l1_to_del = this->tag_l2_to_l1(old_tag_l2, set2, false);
+                int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
+                debug = l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
+            }
 
-            l1_cache.evict(set1);
-            l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
+            debug = l1_cache.evict(set1);
             l1_cache.write(set1, tag1);
+
         }
-    } else if (alloc_ == 1) {
-        int old_tag_l2 = l2_cache.evict(set2);
-        int tag_l1_to_del = this->tag_l2_to_l1(old_tag_l2, set2, false);
-        int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
-        l2_cache.write(set2, tag2);
 
-        l1_cache.evict(set1);
-        l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
-        l1_cache.write(set1, tag1);
+
         return;
-    } else
-        return;
+    }
 }
-
 
 void DRam::calc_stats() {
     L1MissRate_ = (double) l1_cache.getHits_() / l1_cache.getAccesses_();
     L2MissRate_ = (double) l2_cache.getHits_() / l2_cache.getAccesses_();
-    avgAccTime_ = L1MissRate_ * l1_cyc_ + L2MissRate_ * l2_cyc_ + (1 - L1MissRate_ - L2MissRate_) * mem_cyc_;
+    avgAccTime_ = L1MissRate_ * l1_cyc_ + L2MissRate_ * l2_cyc_ + (1 - L1MissRate_ - L2MissRate_) *( mem_cyc_);
 
 }
 
