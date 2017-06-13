@@ -5,7 +5,7 @@
 #ifndef HW4_CACHE_H
 #define HW4_CACHE_H
 #include "Way.h"
-#include "HelpFunc.h"
+
 
 
 class Cache {

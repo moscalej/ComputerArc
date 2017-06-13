@@ -148,13 +148,6 @@ int Cache::getHits_() const {
     return hits_;
 }
 
-int Cache::get_set(int address) {
-    return bits_to_take(this->set_LSB, this->address_LSB - this->set_LSB, address);
-}
-
-int Cache::get_tag(int address) {
-    return bits_to_take(this->address_LSB, 32 ,address);
-}
 
 
 
