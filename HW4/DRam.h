@@ -18,16 +18,16 @@ private:
     double L1MissRate_;
 
     int b_size_; //block size
-    int l1_size_;//total number of kilo
     int l2_size_;
-    int l1_assoc_;
     int l1_cyc_;
-    int l2_cyc_;
-
-    int l1_set_size;
-    int l2_set_size;
-
+    int l1_size_;//total number of kilo
+    int l1_assoc_;
     int l2_assoc_;
+
+    int l2_cyc_;
+    int l1_set_size;
+
+    int l2_set_size;
     int alloc_;
     int mem_cyc_;
 

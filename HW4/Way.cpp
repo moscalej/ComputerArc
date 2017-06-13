@@ -5,7 +5,7 @@
 #include "Way.h"
 
 bool Way::access(int set, int tag) {
-    if (set >= size_)
+    if (set >= size_ || tag < 0 )
         return false;
     if (tag == tags[set])
         return true;

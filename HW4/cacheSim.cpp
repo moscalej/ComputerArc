@@ -89,9 +89,9 @@ int main(int argc, char **argv) {
         YandADRam.execute(operation, num);
 
     }
-
-    double L1MissRate = YandADRam.getL1MissRate_();
-    double L2MissRate = YandADRam.getL2MissRate_();
+    YandADRam.calc_stats();
+    double L1MissRate = 1 - YandADRam.getL1MissRate_();
+    double L2MissRate = 1 - YandADRam.getL2MissRate_();
     double avgAccTime = YandADRam.getAvgAccTime_();
 
     printf("L1miss=%.03f ", L1MissRate);
