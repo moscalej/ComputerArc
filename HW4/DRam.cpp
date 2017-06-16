@@ -83,7 +83,10 @@ void DRam::execute(char operation, int address) {
 
         }
 
-
+    }
+    else {
+        l1_cache.access(set1, tag1);
+        l2_cache.access(set2, tag2);
         return;
     }
 }
