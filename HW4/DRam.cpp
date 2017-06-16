@@ -20,7 +20,7 @@ DRam::DRam(int mem_cyc, int b_size, int alloc, int l1_size, int l1_assoc, int l1
     this->l2_size_ = l2_size;
     this->l1_assoc_ = l1_assoc;
     this->l2_assoc_ = l2_assoc;
-
+    tot_accesses=0;
     this->L1MissRate_ = 0;
     this->L2MissRate_ = 0;
     this->avgAccTime_ = 0;
@@ -38,6 +38,7 @@ void DRam::execute(char operation, int address) {
     int set1 = bits_to_take(this->b_size_, l1_set_size, address);
     int set2 = bits_to_take(this->b_size_, l2_set_size, address);
     int debug;
+    tot_accesses++;
     /*
      * if read, check l1, if hit return, else check l2 ,if miss fetch from mem
      * (num_of_mem_access++, write new value to both caches)
@@ -94,7 +95,7 @@ void DRam::execute(char operation, int address) {
 void DRam::calc_stats() {
     L1MissRate_ = (double) l1_cache.getHits_() / l1_cache.getAccesses_();
     L2MissRate_ = (double) l2_cache.getHits_() / l2_cache.getAccesses_();
-    avgAccTime_ = L1MissRate_ * l1_cyc_ + L2MissRate_ * l2_cyc_ + (1 - L1MissRate_ - L2MissRate_) *( mem_cyc_);
+    avgAccTime_ = L1MissRate_ * l1_cyc_ + L2MissRate_ * l2_cyc_ + (1 - (l1_cache.getHits_()+(double) l2_cache.getHits_())/tot_accesses) *( mem_cyc_);
 
 }
 

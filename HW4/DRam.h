@@ -16,7 +16,7 @@ private:
     double avgAccTime_;
     double L2MissRate_;
     double L1MissRate_;
-
+    int tot_accesses;
     int b_size_; //block size
     int l2_size_;
     int l1_cyc_;
