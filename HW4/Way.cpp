@@ -25,6 +25,7 @@ Way::Way(int size) {
     size_ = size;
     for (int i = 0; i < size_; i++) {
         tags.push_back(-1);
+        dirty_bit.push_back(0);
     }
 
 }
@@ -37,10 +38,28 @@ Way::~Way() {
     this->tags.clear();
 }
 
-int Way::erase_entry(int tag, int set) {
+int Way::erase(int tag, int set) {
     if (this->access(set, tag)) {
         this->tags[set] = -1;
         return 0;
     }
     return -1;
 }
+
+void Way::invalidate(int set) {
+        this->dirty_bit[set] = 1;
+        return ;
+
+}
+
+void Way::validate(int set) {
+        this->dirty_bit[set] = 0;
+
+}
+int Way::check_validity(int tag, int set) {
+    return  this->dirty_bit[set];
+}
+
+
+
+

@@ -53,11 +53,16 @@ public:
      * @return 0 if the block was free
      *         -1 if the block does not mach the tag
      */
-    int erase_entry(int tag, int set);
+    int erase(int tag, int set);
+    void invalidate(int set);
+    int check_validity(int tag, int set);
 
 protected:
     int size_;
     vector<int> tags;
+    vector<int> dirty_bit;
+
+    void validate(int set);
 };
 
 

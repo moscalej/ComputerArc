@@ -86,7 +86,7 @@ int main(int argc, char **argv) {
         // DEBUG - remove this line
         cout << " (dec) " << num << endl;
 
-        YandADRam.execute(operation, num);
+         YandADRam.execute(operation, num);
 
     }
     YandADRam.calc_stats();

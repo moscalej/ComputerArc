@@ -56,6 +56,10 @@ public:
      *          -1 : not found
      */
     int erase(int set, int tag_erase);
+/*
+ *  only update LRU
+ */
+    void write_back(int set, int new_tag);
 
     /*
      * This methods are the basic getters for the class
@@ -79,6 +83,8 @@ protected:
     int set_LSB;
     int address_LSB;
     int cache_bit_number;
+
+
 };
 
 

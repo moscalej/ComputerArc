@@ -31,6 +31,17 @@ void Cache::write(int set, int new_tag) {
     }
     return;
 }
+
+void Cache::write_back(int set, int tag) {
+    for (int i=0; i<ways_num_; i++) {
+        if (ways_[i]->get_tag(set)==tag) {
+            update_LRU(i, set);
+            return;
+        }
+
+    }
+    return;
+}
 //trying to implement lru
 int Cache::evict(int set) {
     if(this->LRU_.empty()) {
@@ -67,7 +78,7 @@ void Cache::update_LRU(int way,int set) {
 
 int Cache::erase(int set, int tag_erase) {
     for (int i = 0; i < this->ways_.size(); ++i) {
-        if(0 == this->ways_[i]->erase_entry(tag_erase, set)){
+        if(0 == this->ways_[i]->erase(tag_erase, set)){
             return 0;
         }
     }

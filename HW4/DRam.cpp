@@ -1,6 +1,7 @@
-#include <tgmath.h>
+
 #include "DRam.h"
 #include "HelpFunc.h"
+
 
 #define ADDRESS_SIZE 32
 
@@ -47,26 +48,38 @@ void DRam::execute(char operation, int address) {
     if (operation == 'r' || operation == 'w' && alloc_ == 1) {
         if (l1_cache.access(set1, tag1))
             return;
-        else if (l2_cache.access(set2, tag2)) {
-            //if found on L2 we write it on L1 (LRU)
-            l1_cache.evict(set1);
-            l1_cache.write(set1, tag1);
-            return;
-        } else {
+        else {
+            if (!l2_cache.access(set2, tag2)) {
+                int old_tag_l2 = l2_cache.evict(set2);
+                l2_cache.write(set2, tag2);
+                if (old_tag_l2 >= 0) {
+                    int tag_l1_to_del = this->tag_l2_to_l1(old_tag_l2, set2, false);
+                    int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
+                    debug = l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
+                }
+            }
 
             //not found L1 and L2 writes on L2 (LRU) search the block on L1(erase) writes l1
             //this make sure is on L2 and L1, may need to update L1 LRU
-            int old_tag_l2 = l2_cache.evict(set2);
-            l2_cache.write(set2, tag2);
-            if (old_tag_l2 >= 0) {
-
-                int tag_l1_to_del = this->tag_l2_to_l1(old_tag_l2, set2, false);
-                int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
-                debug = l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
-            }
-
-            debug = l1_cache.evict(set1);
+            int old_tag_l1 = l1_cache.evict(set1);
             l1_cache.write(set1, tag1);
+            //evicting dirty line from l1->write line to l2
+            if (old_tag_l1 >= 0) {
+                int tag_l2_to_del = this->tag_l2_to_l1(old_tag_l1, set1, true);
+                int set_l2_to_del = this->set_l2_to_l1(old_tag_l1, set1, true);
+                l2_cache.write_back(set_l2_to_del, tag_l2_to_del);
+            }
+                //evicted line from l2->evict same line from l1
+             //   if (old_tag_l2 >= 0) {
+
+//                    int tag_l1_to_ del = this->tag_l2_to_l1(old_tag_l2, set2, false);
+  //                  int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
+    //                debug = l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
+      //          }
+        //    }
+
+
+            return;
 
         }
 
