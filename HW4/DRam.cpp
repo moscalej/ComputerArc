@@ -95,7 +95,7 @@ void DRam::execute(char operation, int address) {
 void DRam::calc_stats() {
     L1MissRate_ = (double) l1_cache.getHits_() / l1_cache.getAccesses_();
     L2MissRate_ = (double) l2_cache.getHits_() / l2_cache.getAccesses_();
-    avgAccTime_ = L1MissRate_ * l1_cyc_ + L2MissRate_ * l2_cyc_ + (1 - (l1_cache.getHits_()+(double) l2_cache.getHits_())/tot_accesses) *( mem_cyc_);
+    avgAccTime_ = L1MissRate_ * l1_cyc_ + L2MissRate_ * l2_cyc_ + (1 - (double)(l1_cache.getHits_()+l2_cache.getHits_())/(tot_accesses))*( mem_cyc_);
 
 }
 
