@@ -4,6 +4,7 @@
 
 #ifndef HW4_CACHE_H
 #define HW4_CACHE_H
+#include <tgmath.h>
 #include "Way.h"
 
 
