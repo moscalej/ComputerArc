@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <vector>
-#include "HelpFunc.h"
+
 using namespace std;
 
 

@@ -12,7 +12,7 @@ Bank: $(OBJS)
 cacheSim.o: cacheSim.cpp DRam.h
 DRam.o: DRam.cpp DRam.h HelpFunc.h
 Cache.o: Cache.cpp Cache.h
-Way.o: Way.cpp Way.h HelpFunc.h
+Way.o: Way.cpp Way.h
 
 
 # Cleaning old files before new make
