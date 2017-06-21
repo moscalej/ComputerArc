@@ -79,6 +79,7 @@ void Cache::update_LRU(int way,int set) {
 int Cache::erase(int set, int tag_erase) {
     for (int i = 0; i < this->ways_.size(); ++i) {
         if(0 == this->ways_[i]->erase(tag_erase, set)){
+
             return 0;
         }
     }
@@ -129,27 +130,7 @@ Cache::~Cache() {
 
 }
 
-Cache::Cache(const Cache &rhs) {
-    this->association_bit_num_=  rhs.association_bit_num_;
-    this->cache_size_bit_num=rhs.cache_size_bit_num;
-    this->ways_ = rhs.ways_;
-    //Todo: need to check if you want to pass all the arguments as pointers or make a copy of the cache we can have a problem here
 
-    for (int i = 0; i< rhs.ways_.size();++i) {
-        Way * temp = new Way;
-        *temp=*(rhs.ways_[i]);
-    }
-
-    this->LRU_ = rhs.LRU_;
-}
-
-Cache & Cache::operator=(const Cache &rhs) {
-    this->association_bit_num_=  rhs.association_bit_num_;
-    this->cache_size_bit_num=rhs.cache_size_bit_num;
-    this->ways_ = rhs.ways_;
-    this->LRU_ = rhs.LRU_;
-    return *this;
-}
 
 int Cache::getAccesses_() const {
     return accesses_;
