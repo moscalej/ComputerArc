@@ -49,12 +49,12 @@ void DRam::execute(char operation, int address, int line_num) {
     if (operation == 'r' || operation == 'w' && alloc_ == 1) {
         if (l1_cache.access(set1, tag1)) {
             //debug
-            cout<<line_num<<" l1 hit: "<<address<<endl;
+           // cout<<line_num<<" l1 hit: "<<address<<endl;
             return;
         }
         else {
             if (!l2_cache.access(set2, tag2)) {
-                cout<<line_num<<" mem hit: "<<address<<endl;
+               // cout<<line_num<<" mem hit: "<<address<<endl;
                 int old_tag_l2 = l2_cache.evict(set2);
                 l2_cache.write(set2, tag2);
                 if (old_tag_l2 >= 0) {
@@ -62,15 +62,15 @@ void DRam::execute(char operation, int address, int line_num) {
                     int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
                     debug = l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
                 }
-            } else
-                cout<<line_num<<" l2 hit: "<<address<<endl;
+            }// else
+             //   cout<<line_num<<" l2 hit: "<<address<<endl;
 
             //not found L1 and L2 writes on L2 (LRU) search the block on L1(erase) writes l1
             //this make sure is on L2 and L1, may need to update L1 LRU
             int old_tag_l1 = l1_cache.evict(set1);
             l1_cache.write(set1, tag1);
             //evicting dirty line from l1->write line to l2
-            if (old_tag_l1 >= 0) {
+            if (old_tag_l1 >= 0 ) {
                 int tag_l2_to_del = this->tag_l2_to_l1(old_tag_l1, set1, true);
                 int set_l2_to_del = this->set_l2_to_l1(old_tag_l1, set1, true);
                 l2_cache.write_back(set_l2_to_del, tag_l2_to_del);
@@ -82,17 +82,17 @@ void DRam::execute(char operation, int address, int line_num) {
     }
     else {
         if (l1_cache.access(set1, tag1)) {
-            cout << line_num << " l1 hit: " << address << endl;
+          //  cout << line_num << " l1 hit: " << address << endl;
             return;
         }
         else
         {
         if (l2_cache.access(set2, tag2)) {
-            cout << line_num << " l2 hit: " << address << endl;
+           // cout << line_num << " l2 hit: " << address << endl;
             return;
         }
         else
-            cout<<line_num<<" mem hit: "<<address<<endl;
+           // cout<<line_num<<" mem hit: "<<address<<endl;
         return;
         }
     }
