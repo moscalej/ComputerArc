@@ -2,7 +2,7 @@
 class DRam {
 public:
     DRam(int mem_cyc, int b_size, int alloc,int l1_size,int l1_assoc,int l1_cyc,int l2_size,int l2_assoc,int l2_cyc);
-    void execute(char operation, int address);
+    void execute(char operation, int address, int line_num);
     void calc_stats();
 
     double getL2MissRate_() const;

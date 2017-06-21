@@ -32,7 +32,7 @@ DRam::DRam(int mem_cyc, int b_size, int alloc, int l1_size, int l1_assoc, int l1
 }
 
 // need to check tag,set correctness
-void DRam::execute(char operation, int address) {
+void DRam::execute(char operation, int address, int line_num) {
     int tag1 = bits_to_take(l1_set_size + this->b_size_, ADDRESS_SIZE, address);
     int tag2 = bits_to_take(l2_set_size + this->b_size_, ADDRESS_SIZE, address);
     int set1 = bits_to_take(this->b_size_, l1_set_size, address);
@@ -47,10 +47,14 @@ void DRam::execute(char operation, int address) {
      */
 
     if (operation == 'r' || operation == 'w' && alloc_ == 1) {
-        if (l1_cache.access(set1, tag1))
+        if (l1_cache.access(set1, tag1)) {
+            //debug
+            cout<<line_num<<" l1 hit: "<<address<<endl;
             return;
+        }
         else {
             if (!l2_cache.access(set2, tag2)) {
+                cout<<line_num<<" mem hit: "<<address<<endl;
                 int old_tag_l2 = l2_cache.evict(set2);
                 l2_cache.write(set2, tag2);
                 if (old_tag_l2 >= 0) {
@@ -58,7 +62,8 @@ void DRam::execute(char operation, int address) {
                     int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
                     debug = l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
                 }
-            }
+            } else
+                cout<<line_num<<" l2 hit: "<<address<<endl;
 
             //not found L1 and L2 writes on L2 (LRU) search the block on L1(erase) writes l1
             //this make sure is on L2 and L1, may need to update L1 LRU
@@ -70,32 +75,33 @@ void DRam::execute(char operation, int address) {
                 int set_l2_to_del = this->set_l2_to_l1(old_tag_l1, set1, true);
                 l2_cache.write_back(set_l2_to_del, tag_l2_to_del);
             }
-                //evicted line from l2->evict same line from l1
-             //   if (old_tag_l2 >= 0) {
-
-//                    int tag_l1_to_ del = this->tag_l2_to_l1(old_tag_l2, set2, false);
-  //                  int set_l1_to_del = this->set_l2_to_l1(old_tag_l2, set2, false);
-    //                debug = l1_cache.erase(set_l1_to_del, tag_l1_to_del);//may need to check LRU
-      //          }
-        //    }
-
-
             return;
 
         }
 
     }
     else {
-        l1_cache.access(set1, tag1);
-        l2_cache.access(set2, tag2);
+        if (l1_cache.access(set1, tag1)) {
+            cout << line_num << " l1 hit: " << address << endl;
+            return;
+        }
+        else
+        {
+        if (l2_cache.access(set2, tag2)) {
+            cout << line_num << " l2 hit: " << address << endl;
+            return;
+        }
+        else
+            cout<<line_num<<" mem hit: "<<address<<endl;
         return;
+        }
     }
 }
 
 void DRam::calc_stats() {
     L1MissRate_ = (double) l1_cache.getHits_() / l1_cache.getAccesses_();
     L2MissRate_ = (double) l2_cache.getHits_() / l2_cache.getAccesses_();
-    avgAccTime_ = (double)(l1_cache.getHits_()*l1_cyc_+l2_cache.getHits_()*l2_cyc_+(tot_accesses-l1_cache.getHits_()-l2_cache.getHits_())*mem_cyc_)/tot_accesses;
+    avgAccTime_ = (double) (l1_cache.getHits_()*l1_cyc_+l2_cache.getHits_()*l2_cyc_+(tot_accesses-l1_cache.getHits_()-l2_cache.getHits_())*mem_cyc_)/tot_accesses;
 
 }
 
@@ -106,7 +112,7 @@ int DRam::tag_l2_to_l1(int old_tag_l2, int set_l2, bool reverse) {
 
 int DRam::set_l2_to_l1(int old_tag_l2, int set_l2, bool reverse) {
     int address = re_build_address(old_tag_l2, set_l2, (reverse) ? this->l1_set_size : this->l2_set_size);
-    return bits_to_take(0, (!reverse) ? this->l2_set_size : this->l1_set_size, address);
+    return bits_to_take(0, (reverse) ? this->l2_set_size : this->l1_set_size, address);
 }
 
 double DRam::getL2MissRate_() const {

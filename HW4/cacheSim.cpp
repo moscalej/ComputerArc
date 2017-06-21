@@ -61,8 +61,10 @@ int main(int argc, char **argv) {
         }
     }
     DRam YandADRam(MemCyc, BSize, WrAlloc, L1Size, L1Assoc, L1Cyc, L2Size, L2Assoc, L2Cyc);
+    //debug
+    int line_num=0;
     while (getline(file, line)) {
-
+        line_num++;
         stringstream ss(line);
         string address;
         char operation = 0; // read (R) or write (W)
@@ -83,9 +85,7 @@ int main(int argc, char **argv) {
         num = strtoul(cutAddress.c_str(), NULL, 16);
 
 
-
-
-         YandADRam.execute(operation, num);
+        YandADRam.execute(operation, num, line_num);
 
     }
     YandADRam.calc_stats();
