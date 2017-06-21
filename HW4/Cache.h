@@ -4,6 +4,7 @@
 
 #ifndef HW4_CACHE_H
 #define HW4_CACHE_H
+
 #include "Way.h"
 
 
@@ -78,7 +79,7 @@ protected:
     int cache_size_bit_num;
     int ways_num_;
     vector<Way*> ways_;
-    vector<vector <int>> LRU_;
+    vector<vector <int> > LRU_;
 
     int set_LSB;
     int address_LSB;
