@@ -6,7 +6,7 @@ OBJS =   cacheSim.o Way.o Cache.o DRam.o
 RM = rm -f
 TARGET=cacheSim
 # Creating the  executable
-Bank: $(OBJS)
+cacheSim: $(OBJS)
 	$(CCLINK) $(CFLAGS) -o cacheSim $(OBJS)
 # Creating the object files
 cacheSim.o: cacheSim.cpp DRam.h
