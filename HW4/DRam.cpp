@@ -37,7 +37,7 @@ void DRam::execute(char operation, int address, int line_num) {
     int tag2 = bits_to_take(l2_set_size + this->b_size_, ADDRESS_SIZE, address);
     int set1 = bits_to_take(this->b_size_, l1_set_size, address);
     int set2 = bits_to_take(this->b_size_, l2_set_size, address);
-    int debug;
+    int debug=-1;
     tot_accesses++;
     /*
      * if read, check l1, if hit return, else check l2 ,if miss fetch from mem
@@ -49,12 +49,12 @@ void DRam::execute(char operation, int address, int line_num) {
     if (operation == 'r' || operation == 'w' && alloc_ == 1) {
         if (l1_cache.access(set1, tag1)) {
             //debug
-           // cout<<line_num<<" l1 hit: "<<address<<endl;
+            cout<<line_num<<" l1 hit: "<<address<<endl;
             return;
         }
         else {
             if (!l2_cache.access(set2, tag2)) {
-             //   cout<<line_num<<" mem hit: "<<address<<endl;
+               cout<<line_num<<" mem hit: "<<address<<endl;
                 int old_tag_l2 = l2_cache.evict(set2);
                 l2_cache.write(set2, tag2);
                 if (old_tag_l2 >= 0) {
@@ -77,10 +77,8 @@ void DRam::execute(char operation, int address, int line_num) {
 
 
             } else {
-              //  cout << line_num << " l2 hit: " << address << endl;
+               cout << line_num << " l2 hit: " << address << endl;
 
-                //not found L1 and L2 writes on L2 (LRU) search the block on L1(erase) writes l1
-                //this make sure is on L2 and L1, may need to update L1 LRU
                 int old_tag_l1 = l1_cache.evict(set1);
                 l1_cache.write(set1, tag1);
                 //evicting dirty line from l1->write line to l2
