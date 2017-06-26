@@ -17,4 +17,4 @@ Way.o: Way.cpp Way.h
 
 # Cleaning old files before new make
 clean:
-	$(RM) $(TARGET) *.o *~ "#"* cacheSim.*
+	$(RM) $(TARGET) *.o *~ "#"* cacheSim.o
