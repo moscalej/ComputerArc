@@ -49,12 +49,12 @@ void DRam::execute(char operation, int address, int line_num) {
     if (operation == 'r' || operation == 'w' && alloc_ == 1) {
         if (l1_cache.access(set1, tag1)) {
             //debug
-            cout<<line_num<<" l1 hit: "<<address<<endl;
+           // cout<<line_num<<" l1 hit: "<<address<<endl;
             return;
         }
         else {
             if (!l2_cache.access(set2, tag2)) {
-               cout<<line_num<<" mem hit: "<<address<<endl;
+              // cout<<line_num<<" mem hit: "<<address<<endl;
                 int old_tag_l2 = l2_cache.evict(set2);
                 l2_cache.write(set2, tag2);
                 if (old_tag_l2 >= 0) {
@@ -77,7 +77,7 @@ void DRam::execute(char operation, int address, int line_num) {
 
 
             } else {
-               cout << line_num << " l2 hit: " << address << endl;
+              // cout << line_num << " l2 hit: " << address << endl;
 
                 int old_tag_l1 = l1_cache.evict(set1);
                 l1_cache.write(set1, tag1);
